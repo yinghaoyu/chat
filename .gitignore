@@ -1,0 +1,8 @@
+/build
+/bin
+/Client/llfcchat/.qtc_clangd
+/Client/llfcchat/bin
+/Client/llfcchat/build
+/.clangd
+/.cache
+compile_commands.json

@@ -1,0 +1,29 @@
+set(GateServer_SRCS
+    AsioIOServicePool.cc
+    ConfigMgr.cc
+    CServer.cc
+    GateServer.cc
+    HttpConnection.cc
+    LogicSystem.cc
+    message.grpc.pb.cc
+    message.pb.cc
+    mysql.cc
+    MysqlDao.cc
+    MysqlMgr.cc
+    RedisMgr.cc
+    StatusGrpcClient.cc
+    VerifyGrpcClient.cc
+    )
+
+add_executable(GateServer ${GateServer_SRCS})
+target_link_libraries(GateServer
+                      pthread
+                      boost_filesystem
+                      boost_system
+                      protobuf
+                      gRPC::grpc++_reflection
+                      gRPC::grpc++
+                      jsoncpp
+                      mysqlclient
+                      hiredis
+                      )
