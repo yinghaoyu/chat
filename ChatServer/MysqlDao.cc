@@ -410,7 +410,7 @@ bool MysqlDao::GetApplyList(const int        touid,
                 "",  // pwd (未查询)
                 result->getString(3),
                 result->getInt32(4),
-                result->getInt32(1));
+                result->getInt16(1));
 
             applyList.push_back(apply_ptr);
         }
