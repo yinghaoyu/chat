@@ -1,6 +1,3 @@
-# llcfchat
-基于`llcfchat`服务器，`mysql`使用
-
 # 编译环境
 > ubuntu20.04
 # 依赖包

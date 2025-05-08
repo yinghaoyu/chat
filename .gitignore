@@ -3,6 +3,7 @@
 /Client/llfcchat/.qtc_clangd
 /Client/llfcchat/bin
 /Client/llfcchat/build
+/VarifyServer/node_modules
 /.clangd
 /.cache
 compile_commands.json
