@@ -44,6 +44,9 @@ void AsioIOServicePool::Stop()
 
     for (auto& t : _threads)
     {
-        t.join();
+        if (t.joinable())
+        {
+            t.join();
+        }
     }
 }

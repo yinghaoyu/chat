@@ -10,11 +10,9 @@ CServer::CServer(boost::asio::io_context& io_context, short port)
     : _io_context(io_context),
       _port(port),
       _acceptor(io_context, tcp::endpoint(tcp::v4(), port)),
-      _timer(_io_context, std::chrono::seconds(60))
+      _timer(_io_context)
 {
     cout << "Server start success, listen on port : " << _port << endl;
-    // 启动定时器
-    _timer.async_wait([this](boost::system::error_code ec) { on_timer(ec); });
     StartAccept();
 }
 
@@ -122,7 +120,17 @@ void CServer::on_timer(const boost::system::error_code& ec)
         session->DealExceptionSession();
     }
 
-    // 再次设置，下一个60s检测
-    _timer.expires_after(std::chrono::seconds(60));
-    _timer.async_wait([this](boost::system::error_code ec) { on_timer(ec); });
+    StartTimer();
 }
+
+void CServer::StartTimer()
+{
+    _timer.expires_after(std::chrono::seconds(60));
+
+    auto self = shared_from_this();
+
+    _timer.async_wait(
+        [self](boost::system::error_code ec) { self->on_timer(ec); });
+}
+
+void CServer::StopTimer() { _timer.cancel(); }

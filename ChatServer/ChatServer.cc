@@ -40,6 +40,9 @@ int main()
         auto pointer_server =
             std::make_shared<CServer>(io_context, stoi(port_str));
 
+        // 启动定时器
+        pointer_server->StartTimer();
+
         // 定义一个GrpcServer
 
         std::string server_address(
@@ -59,11 +62,16 @@ int main()
         std::thread grpc_server_thread([&server]() { server->Wait(); });
 
         boost::asio::signal_set signals(io_context, SIGINT, SIGTERM);
-        signals.async_wait([&io_context, pool, &server](auto, auto) {
-            io_context.stop();
-            pool->Stop();
-            server->Shutdown();
-        });
+        signals.async_wait(
+            [&io_context, pool, &pointer_server, &server](auto, auto) {
+                // FIXME(yinghaoyu):
+                // 这里timer.cancel()与io_context.stop()在Windows和Linux表现不一样
+                // Windows先调用timer.cancel()，后调用io_context.stop()会产生dump
+                pointer_server->StopTimer();
+                io_context.stop();
+                pool->Stop();
+                server->Shutdown();
+            });
 
         // 将Cserver注册给逻辑类方便以后清除连接
         LogicSystem::GetInstance()->SetServer(pointer_server);

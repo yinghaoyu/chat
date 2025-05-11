@@ -7,16 +7,24 @@
 #include <boost/asio/steady_timer.hpp>
 
 using boost::asio::ip::tcp;
-class CServer
+class CServer : public std::enable_shared_from_this<CServer>
 {
   public:
     CServer(boost::asio::io_context& io_context, short port);
+
     ~CServer();
+
     void ClearSession(std::string);
+
     // 根据uid获取session
     shared_ptr<CSession> GetSession(std::string);
-    bool                 CheckValid(std::string);
-    void                 on_timer(const boost::system::error_code& ec);
+
+    bool CheckValid(std::string);
+
+    void on_timer(const boost::system::error_code& ec);
+
+    void StartTimer();
+    void StopTimer();
 
   private:
     void HandleAccept(
