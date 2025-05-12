@@ -8,6 +8,7 @@ set(StatusServer_SRCS
     mysql.cc
     MysqlDao.cc
     MysqlMgr.cc
+    redis.cc
     RedisMgr.cc
     StatusServer.cc
     StatusServiceImpl.cc

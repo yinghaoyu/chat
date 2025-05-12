@@ -1,6 +1,11 @@
 #pragma once
 #include "const.h"
 
+#include <boost/asio.hpp>
+#include <boost/beast.hpp>
+
+using tcp = boost::asio::ip::tcp;
+
 class HttpConnection : public std::enable_shared_from_this<HttpConnection>
 {
     friend class LogicSystem;

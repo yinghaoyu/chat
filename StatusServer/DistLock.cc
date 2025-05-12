@@ -26,7 +26,7 @@ static std::string generateUUID()
 }
 
 // 尝试获取锁，返回锁的唯一标识符（UUID），如果获取失败则返回空字符串
-std::string DistLock::acquireLock(redisContext* context,
+std::string DistLock::acquireLock(IRedis::ptr connect,
     const std::string& lockName, int lockTimeout, int acquireTimeout)
 {
     std::string identifier = generateUUID();
@@ -37,8 +37,7 @@ std::string DistLock::acquireLock(redisContext* context,
     while (std::chrono::steady_clock::now() < endTime)
     {
         // 使用 SET 命令尝试加锁：SET lockKey identifier NX EX lockTimeout
-        redisReply* reply = (redisReply*)redisCommand(context,
-            "SET %s %s NX EX %d",
+        auto reply = connect->cmd("SET %s %s NX EX %d",
             lockKey.c_str(),
             identifier.c_str(),
             lockTimeout);
@@ -48,10 +47,8 @@ std::string DistLock::acquireLock(redisContext* context,
             if (reply->type == REDIS_REPLY_STATUS &&
                 std::string(reply->str) == "OK")
             {
-                freeReplyObject(reply);
                 return identifier;
             }
-            freeReplyObject(reply);
         }
         // 暂停 1 毫秒后重试，防止忙等待
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -60,7 +57,7 @@ std::string DistLock::acquireLock(redisContext* context,
 }
 
 // 释放锁，只有锁的持有者才能释放，返回是否成功
-bool DistLock::releaseLock(redisContext* context, const std::string& lockName,
+bool DistLock::releaseLock(IRedis::ptr connect, const std::string& lockName,
     const std::string& identifier)
 {
     std::string lockKey = "lock:" + lockName;
@@ -72,12 +69,9 @@ bool DistLock::releaseLock(redisContext* context, const std::string& lockName,
                              end";
     // 调用 EVAL 命令执行 Lua 脚本，第一个参数为脚本，后面依次为 key 的数量、key
     // 以及对应的参数
-    redisReply* reply   = (redisReply*)redisCommand(context,
-        "EVAL %s 1 %s %s",
-        luaScript,
-        lockKey.c_str(),
-        identifier.c_str());
-    bool        success = false;
+    auto reply = connect->cmd(
+        "EVAL %s 1 %s %s", luaScript, lockKey.c_str(), identifier.c_str());
+    bool success = false;
     if (reply != nullptr)
     {
         // 当返回整数值为 1 时，表示成功删除了锁
@@ -85,7 +79,6 @@ bool DistLock::releaseLock(redisContext* context, const std::string& lockName,
         {
             success = true;
         }
-        freeReplyObject(reply);
     }
     return success;
 }

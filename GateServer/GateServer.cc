@@ -136,12 +136,10 @@ int main()
         std::make_shared<CServer>(ioc, gate_port)->Start();
         std::cout << "Gate Server listen on port: " << gate_port << std::endl;
         ioc.run();
-        RedisMgr::GetInstance()->Close();
     }
     catch (std::exception const& e)
     {
         std::cerr << "Error: " << e.what() << std::endl;
-        RedisMgr::GetInstance()->Close();
         return EXIT_FAILURE;
     }
 }

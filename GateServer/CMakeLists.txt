@@ -2,6 +2,7 @@ set(GateServer_SRCS
     AsioIOServicePool.cc
     ConfigMgr.cc
     CServer.cc
+    DistLock.cc
     GateServer.cc
     HttpConnection.cc
     LogicSystem.cc
@@ -10,6 +11,7 @@ set(GateServer_SRCS
     mysql.cc
     MysqlDao.cc
     MysqlMgr.cc
+    redis.cc
     RedisMgr.cc
     StatusGrpcClient.cc
     VerifyGrpcClient.cc

@@ -1120,6 +1120,7 @@ MySQL::ptr MySQLPool::get()
         else
         {
             std::cout << "reconnect fail";
+            delete rt;
             return nullptr;
         }
     }

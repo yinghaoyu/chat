@@ -7,6 +7,7 @@
 
 #include <grpcpp/grpcpp.h>
 #include <condition_variable>
+#include <queue>
 
 using grpc::Channel;
 using grpc::ClientContext;

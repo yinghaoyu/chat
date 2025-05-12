@@ -1,15 +1,17 @@
 #pragma once
-#include <hiredis/hiredis.h>
+
+#include "redis.h"
+
 #include <string>
 class DistLock
 {
   public:
     static DistLock& Inst();
     ~DistLock() = default;
-    std::string acquireLock(redisContext* context, const std::string& lockName,
+    std::string acquireLock(IRedis::ptr connect, const std::string& lockName,
         int lockTimeout, int acquireTimeout);
 
-    bool releaseLock(redisContext* context, const std::string& lockName,
+    bool releaseLock(IRedis::ptr connect, const std::string& lockName,
         const std::string& identifier);
 
   private:

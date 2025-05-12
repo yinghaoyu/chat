@@ -31,7 +31,6 @@ int main()
         RedisMgr::GetInstance()->HSet(LOGIN_COUNT, server_name, "0");
         Defer derfer([server_name]() {
             RedisMgr::GetInstance()->HDel(LOGIN_COUNT, server_name);
-            RedisMgr::GetInstance()->Close();
         });
 
         boost::asio::io_context io_context;
