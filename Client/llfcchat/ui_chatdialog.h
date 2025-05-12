@@ -23,6 +23,7 @@
 #include <contactuserlist.h>
 #include <friendinfopage.h>
 #include <statewidget.h>
+#include <userinfopage.h>
 #include "chatuserlist.h"
 #include "clickedbtn.h"
 #include "customizeedit.h"
@@ -41,6 +42,7 @@ public:
     QLabel *side_head_lb;
     StateWidget *side_chat_lb;
     StateWidget *side_contact_lb;
+    StateWidget *side_settings_lb;
     QWidget *widget;
     QSpacerItem *verticalSpacer;
     QWidget *chat_user_wid;
@@ -57,12 +59,13 @@ public:
     ChatPage *chat_page;
     ApplyFriendPage *friend_apply_page;
     FriendInfoPage *friend_info_page;
+    UserInfoPage *user_info_page;
 
     void setupUi(QDialog *ChatDialog)
     {
         if (ChatDialog->objectName().isEmpty())
             ChatDialog->setObjectName(QString::fromUtf8("ChatDialog"));
-        ChatDialog->resize(602, 507);
+        ChatDialog->resize(500, 400);
         horizontalLayout = new QHBoxLayout(ChatDialog);
         horizontalLayout->setSpacing(0);
         horizontalLayout->setObjectName(QString::fromUtf8("horizontalLayout"));
@@ -108,6 +111,13 @@ public:
 
         verticalLayout_5->addWidget(side_contact_lb);
 
+        side_settings_lb = new StateWidget(widget_2);
+        side_settings_lb->setObjectName(QString::fromUtf8("side_settings_lb"));
+        side_settings_lb->setMinimumSize(QSize(30, 30));
+        side_settings_lb->setMaximumSize(QSize(30, 30));
+
+        verticalLayout_5->addWidget(side_settings_lb);
+
 
         verticalLayout_4->addWidget(widget_2);
 
@@ -138,6 +148,7 @@ public:
         verticalLayout->setContentsMargins(0, 0, 0, 0);
         search_wid = new QWidget(chat_user_wid);
         search_wid->setObjectName(QString::fromUtf8("search_wid"));
+        search_wid->setEnabled(true);
         search_wid->setMinimumSize(QSize(0, 60));
         search_wid->setMaximumSize(QSize(16777215, 60));
         horizontalLayout_2 = new QHBoxLayout(search_wid);
@@ -197,6 +208,9 @@ public:
         friend_info_page = new FriendInfoPage();
         friend_info_page->setObjectName(QString::fromUtf8("friend_info_page"));
         stackedWidget->addWidget(friend_info_page);
+        user_info_page = new UserInfoPage();
+        user_info_page->setObjectName(QString::fromUtf8("user_info_page"));
+        stackedWidget->addWidget(user_info_page);
 
         horizontalLayout->addWidget(stackedWidget);
 

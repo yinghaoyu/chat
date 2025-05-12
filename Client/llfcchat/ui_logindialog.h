@@ -106,8 +106,8 @@ public:
 
         email_edit = new QLineEdit(LoginDialog);
         email_edit->setObjectName(QString::fromUtf8("email_edit"));
-        email_edit->setMinimumSize(QSize(0, 25));
-        email_edit->setMaximumSize(QSize(16777215, 25));
+        email_edit->setMinimumSize(QSize(0, 30));
+        email_edit->setMaximumSize(QSize(16777215, 30));
 
         horizontalLayout_2->addWidget(email_edit);
 
@@ -129,8 +129,8 @@ public:
 
         pass_edit = new QLineEdit(LoginDialog);
         pass_edit->setObjectName(QString::fromUtf8("pass_edit"));
-        pass_edit->setMinimumSize(QSize(0, 25));
-        pass_edit->setMaximumSize(QSize(16777215, 25));
+        pass_edit->setMinimumSize(QSize(0, 30));
+        pass_edit->setMaximumSize(QSize(16777215, 30));
 
         horizontalLayout_3->addWidget(pass_edit);
 

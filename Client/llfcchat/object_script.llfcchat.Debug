@@ -28,6 +28,7 @@ debug/friendlabel.o
 debug/global.o
 debug/grouptipitem.o
 debug/httpmgr.o
+debug/imagecropperlabel.o
 debug/invaliditem.o
 debug/lineitem.o
 debug/listitembase.o
@@ -43,6 +44,7 @@ debug/statewidget.o
 debug/tcpmgr.o
 debug/timerbtn.o
 debug/userdata.o
+debug/userinfopage.o
 debug/usermgr.o
 debug/qrc_rc.o
 debug/moc_BubbleFrame.o
@@ -74,6 +76,8 @@ debug/moc_friendinfopage.o
 debug/moc_friendlabel.o
 debug/moc_grouptipitem.o
 debug/moc_httpmgr.o
+debug/moc_imagecropperdialog.o
+debug/moc_imagecropperlabel.o
 debug/moc_invaliditem.o
 debug/moc_lineitem.o
 debug/moc_listitembase.o
@@ -86,4 +90,5 @@ debug/moc_searchlist.o
 debug/moc_statelabel.o
 debug/moc_statewidget.o
 debug/moc_tcpmgr.o
+debug/moc_userinfopage.o
 debug/moc_usermgr.o
