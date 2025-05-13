@@ -114,7 +114,7 @@ Status StatusServiceImpl::Login(
     std::string token_key   = USERTOKENPREFIX + uid_str;
     std::string token_value = "";
     bool        success = RedisMgr::GetInstance()->Get(token_key, token_value);
-    if (success)
+    if (!success)
     {
         reply->set_error(ErrorCodes::UidInvalid);
         return Status::OK;

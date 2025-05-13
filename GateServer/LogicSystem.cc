@@ -263,8 +263,9 @@ LogicSystem::LogicSystem()
             return true;
         }
 
-        std::cout << "succeed to load userinfo uid is " << userInfo.uid
+        std::cout << "get chatserver success uid: " << userInfo.uid
                   << std::endl;
+
         root["error"]       = 0;
         root["email"]       = email;
         root["uid"]         = userInfo.uid;

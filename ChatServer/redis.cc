@@ -54,7 +54,53 @@ Redis::Redis(const std::string& host, int32_t port, const std::string& passwd)
     m_cmdTimeout.tv_usec = timeout % 1000 * 1000;
 }
 
-bool Redis::reconnect() { return redisReconnect(m_context.get()); }
+bool Redis::reconnect()
+{
+    if (redisReconnect(m_context.get()) == REDIS_ERR)
+    {
+        std::cout << "redisReconnect error: (" << m_host << ":" << m_port << ")"
+                  << std::endl;
+        return false;
+    }
+    if (!m_passwd.empty())
+    {
+        auto r = (redisReply*)redisCommand(
+            m_context.get(), "auth %s", m_passwd.c_str());
+
+        if (!r)
+        {
+            std::cout << "auth error:(" << m_host << ":" << m_port << ")"
+                      << std::endl;
+            return false;
+        }
+
+        ReplyPtr rt(r, freeReplyObject);
+
+        if (rt->type != REDIS_REPLY_STATUS)
+        {
+            std::cout << "auth reply type error:" << rt->type << "(" << m_host
+                      << ":" << m_port << ")" << std::endl;
+            return false;
+        }
+        if (!rt->str)
+        {
+            std::cout << "auth reply str error: NULL(" << m_host << ":"
+                      << m_port << ")" << std::endl;
+            return false;
+        }
+        if (strcmp(rt->str, "OK") == 0)
+        {
+            return true;
+        }
+        else
+        {
+            std::cout << "auth error: " << rt->str << "(" << m_host << ":"
+                      << m_port << ")" << std::endl;
+            return false;
+        }
+    }
+    return true;
+}
 
 bool Redis::connect() { return connect(m_host, m_port, 50); }
 
@@ -81,31 +127,35 @@ bool Redis::connect(const std::string& ip, int port, uint64_t ms)
         if (!m_passwd.empty())
         {
             auto r = (redisReply*)redisCommand(c, "auth %s", m_passwd.c_str());
+
             if (!r)
             {
                 std::cout << "auth error:(" << m_host << ":" << m_port << ")"
                           << std::endl;
                 return false;
             }
-            if (r->type != REDIS_REPLY_STATUS)
+
+            ReplyPtr rt(r, freeReplyObject);
+
+            if (rt->type != REDIS_REPLY_STATUS)
             {
-                std::cout << "auth reply type error:" << r->type << "("
+                std::cout << "auth reply type error:" << rt->type << "("
                           << m_host << ":" << m_port << ")" << std::endl;
                 return false;
             }
-            if (!r->str)
+            if (!rt->str)
             {
                 std::cout << "auth reply str error: NULL(" << m_host << ":"
                           << m_port << ")" << std::endl;
                 return false;
             }
-            if (strcmp(r->str, "OK") == 0)
+            if (strcmp(rt->str, "OK") == 0)
             {
                 return true;
             }
             else
             {
-                std::cout << "auth error: " << r->str << "(" << m_host << ":"
+                std::cout << "auth error: " << rt->str << "(" << m_host << ":"
                           << m_port << ")" << std::endl;
                 return false;
             }
@@ -135,12 +185,14 @@ ReplyPtr Redis::cmd(const char* fmt, ...)
 ReplyPtr Redis::cmd(const char* fmt, va_list ap)
 {
     auto r = (redisReply*)redisvCommand(m_context.get(), fmt, ap);
+
     if (!r)
     {
         std::cout << "redisCommand error: (" << fmt << ")(" << m_host << ":"
                   << m_port << ")" << std::endl;
         return nullptr;
     }
+
     ReplyPtr rt(r, freeReplyObject);
     if (r->type != REDIS_REPLY_ERROR)
     {
@@ -178,7 +230,7 @@ ReplyPtr Redis::cmd(const std::vector<std::string>& argv)
     }
 
     std::cout << "redisCommandArgv error: (" << m_host << ":" << m_port << ")("
-              << r->str << std::endl;
+              << r->str << ")" << std::endl;
     return nullptr;
 }
 
@@ -226,7 +278,6 @@ IRedis::ptr RedisPool::get()
     std::unique_lock<std::mutex> lock(m_mutex);
 
     IRedis* r = nullptr;
-
     if (!m_conns.empty())
     {
         r = m_conns.front();
@@ -235,12 +286,12 @@ IRedis::ptr RedisPool::get()
         auto rr = dynamic_cast<ISyncRedis*>(r);
         if ((time(0) - rr->getLastActiveTime()) > 30)
         {
-            if (rr->cmd("ping") != 0)
+            if (!rr->cmd("ping"))
             {
                 delete r;
                 return nullptr;
             }
-            if (rr->reconnect() != 0)
+            if (!rr->reconnect())
             {
                 delete r;
                 return nullptr;
