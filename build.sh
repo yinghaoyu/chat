@@ -10,7 +10,9 @@ cd StatusServer && ./generate_message_grpc.sh
 
 cd $root_path
 
-mkdir -p build && cd build && cmake .. && make -j4
+ln -sf build/compile_commands.json
+
+mkdir -p build && cd build && cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON .. && make -j4
 
 cd $root_path
 

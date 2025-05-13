@@ -2,7 +2,10 @@
 /bin
 /Client/llfcchat/.qtc_clangd
 /Client/llfcchat/bin
+/Client/llfcchat/debug
+/Client/llfcchat/release
 /Client/llfcchat/build
+/Client/llfcchat/.qmake.stash
 /VarifyServer/node_modules
 /.clangd
 /.cache
