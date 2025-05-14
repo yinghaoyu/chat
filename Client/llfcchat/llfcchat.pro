@@ -64,6 +64,7 @@ SOURCES += \
         logindialog.cpp \
         main.cpp \
         mainwindow.cpp \
+        notification.cpp \
         registerdialog.cpp \
         resetdialog.cpp \
         searchlist.cpp \
@@ -114,6 +115,7 @@ HEADERS += \
         loadingdlg.h \
         logindialog.h \
         mainwindow.h \
+        notification.h \
         registerdialog.h \
         resetdialog.h \
         searchlist.h \

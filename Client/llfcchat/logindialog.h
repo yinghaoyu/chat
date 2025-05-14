@@ -2,7 +2,9 @@
 #define LOGINDIALOG_H
 
 #include <QDialog>
+#include <QTimeLine>
 #include "global.h"
+#include "notification.h"
 
 namespace Ui {
 class LoginDialog;
@@ -18,17 +20,16 @@ public:
 private:
     void initHead();
     void initHttpHandlers();
-    void showTip(QString str,bool b_ok);
-    bool checkUserValid();
+    void showTip(QString str);
+    bool checkEmailValid();
     bool checkPwdValid();
     Ui::LoginDialog *ui;
     QMap<ReqId, std::function<void(const QJsonObject&)>> _handlers;
-    bool enableBtn(bool);
-    QMap<TipErr, QString> _tip_errs;
-    void AddTipErr(TipErr te,QString tips);
-    void DelTipErr(TipErr te);
+    bool enableOperation(bool);
     int _uid;
     QString _token;
+    Notification* notification = Q_NULLPTR;
+    QTimeLine* animation = Q_NULLPTR;
 private slots:
     void slot_forget_pwd();
     void on_login_btn_clicked();

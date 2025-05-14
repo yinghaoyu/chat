@@ -7,13 +7,19 @@
 #include <QRegularExpression>
 #include <QPainter>
 #include <QPainterPath>
+#include <QPicture>
+#include <QTimer>
 
 LoginDialog::LoginDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::LoginDialog)
 {
     ui->setupUi(this);
-    connect(ui->reg_btn, &QPushButton::clicked, this, &LoginDialog::switchRegister);
+
+    ui->reg_label->SetState("normal","hover","","selected","selected_hover","");
+    ui->reg_label->setCursor(Qt::PointingHandCursor);
+    connect(ui->reg_label, &ClickedLabel::clicked, this, &LoginDialog::switchRegister);
+
     ui->forget_label->SetState("normal","hover","","selected","selected_hover","");
     ui->forget_label->setCursor(Qt::PointingHandCursor);
     connect(ui->forget_label, &ClickedLabel::clicked, this, &LoginDialog::slot_forget_pwd);
@@ -28,6 +34,47 @@ LoginDialog::LoginDialog(QWidget *parent) :
     connect(TcpMgr::GetInstance().get(), &TcpMgr::sig_con_success, this, &LoginDialog::slot_tcp_con_finish);
     //连接tcp管理者发出的登陆失败信号
     connect(TcpMgr::GetInstance().get(), &TcpMgr::sig_login_failed, this, &LoginDialog::slot_login_failed);
+
+    QPixmap email_pm(QString(":/res/email.png"));
+    // 将图片缩放到label的大小
+    ui->email_lb->setPixmap(email_pm.scaled( ui->email_lb->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    ui->email_lb->setScaledContents(true);
+
+    QPixmap pass_pm(QString(":/res/passwd.png"));
+    // 将图片缩放到label的大小
+    ui->pass_label->setPixmap(pass_pm.scaled( ui->pass_label->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    ui->pass_label->setScaledContents(true);
+
+    //设置密码格式隐藏
+    ui->pass_edit->setEchoMode(QLineEdit::Password);
+    //设置浮动显示手形状
+    ui->pass_visible->setCursor(Qt::PointingHandCursor);
+
+    ui->pass_visible->SetState("unvisible","unvisible_hover","","visible",
+        "visible_hover","");
+
+    //连接点击事件
+    connect(ui->pass_visible, &ClickedLabel::clicked, this, [this]() {
+        auto state = ui->pass_visible->GetCurState();
+        if(state == ClickLbState::Normal){
+            ui->pass_edit->setEchoMode(QLineEdit::Password);
+        }else{
+            ui->pass_edit->setEchoMode(QLineEdit::Normal);
+        }
+        qDebug() << "Label was clicked!";
+    });
+
+    this->notification = new Notification(this);
+    this->notification->setGeometry(QRect(QPoint(this->rect().center().x() - (this->notification->width() / 2), this->rect().top() - (this->notification->height())), QSize(this->notification->size())));
+    this->notification->hide();
+
+    this->animation = new QTimeLine(500, this);
+    this->animation->setUpdateInterval(0);
+    this->animation->setFrameRange(this->rect().top() - (this->notification->height()), 20);
+
+    connect(this->animation, &QTimeLine::frameChanged, this, [=](int frame) {
+        this->notification->move(this->notification->geometry().x(), frame);
+    });
 
     initHead();
 }
@@ -74,8 +121,8 @@ void LoginDialog::initHttpHandlers()
     _handlers.insert(ReqId::ID_LOGIN_USER, [this](QJsonObject jsonObj){
         int error = jsonObj["error"].toInt();
         if(error != ErrorCodes::SUCCESS){
-            showTip(tr("参数错误"),false);
-            enableBtn(true);
+            showTip(tr("参数错误"));
+            enableOperation(true);
             return;
         }
         auto email = jsonObj["email"].toString();
@@ -95,17 +142,17 @@ void LoginDialog::initHttpHandlers()
     });
 }
 
-void LoginDialog::showTip(QString str, bool b_ok)
+void LoginDialog::showTip(QString str)
 {
-    if(b_ok){
-         ui->err_tip->setProperty("state","normal");
-    }else{
-        ui->err_tip->setProperty("state","err");
-    }
-
-    ui->err_tip->setText(str);
-
-    repolish(ui->err_tip);
+    this->animation->setDirection(QTimeLine::Forward);
+    this->notification->setText(str);
+    this->notification->setGeometry(QRect(QPoint(this->rect().center().x() - (this->notification->width() / 2), this->rect().top() - (this->notification->height())), QSize(this->notification->size())));
+    this->notification->show();
+    this->animation->start();
+    QTimer::singleShot(1000, this, [=]() {
+        this->animation->setDirection(QTimeLine::Backward);
+        this->animation->start();
+    });
 }
 
 void LoginDialog::slot_forget_pwd()
@@ -114,15 +161,15 @@ void LoginDialog::slot_forget_pwd()
     emit switchReset();
 }
 
-bool LoginDialog::checkUserValid(){
-
+bool LoginDialog::checkEmailValid(){
     auto email = ui->email_edit->text();
-    if(email.isEmpty()){
+    QRegularExpression regex(R"((\w+)(\.|_)?(\w*)@(\w+)(\.(\w+))+)");
+    bool match = regex.match(email).hasMatch();
+    if(!match){
         qDebug() << "email empty " ;
-        AddTipErr(TipErr::TIP_EMAIL_ERR, tr("邮箱不能为空"));
+        showTip(tr("邮箱地址不正确"));
         return false;
     }
-    DelTipErr(TipErr::TIP_EMAIL_ERR);
     return true;
 }
 
@@ -131,7 +178,7 @@ bool LoginDialog::checkPwdValid(){
     if(pwd.length() < 6 || pwd.length() > 15){
         qDebug() << "Pass length invalid";
         //提示长度不准确
-        AddTipErr(TipErr::TIP_PWD_ERR, tr("密码长度应为6~15"));
+        showTip(tr("密码长度应为6~15"));
         return false;
     }
 
@@ -142,34 +189,32 @@ bool LoginDialog::checkPwdValid(){
     bool match = regExp.match(pwd).hasMatch();
     if(!match){
         //提示字符非法
-        AddTipErr(TipErr::TIP_PWD_ERR, tr("不能包含非法字符且长度为(6~15)"));
+        showTip(tr("不能包含非法字符且长度为(6~15)"));
         return false;;
     }
-
-    DelTipErr(TipErr::TIP_PWD_ERR);
 
     return true;
 }
 
-bool LoginDialog::enableBtn(bool enabled)
+bool LoginDialog::enableOperation(bool enabled)
 {
+    ui->email_edit->setEnabled(enabled);
+    ui->pass_edit->setEnabled(enabled);
     ui->login_btn->setEnabled(enabled);
-    ui->reg_btn->setEnabled(enabled);
     return true;
 }
 
 void LoginDialog::on_login_btn_clicked()
 {
     qDebug()<<"login btn clicked";
-    if(checkUserValid() == false){
+    if(checkEmailValid() == false){
         return;
     }
 
     if(checkPwdValid() == false){
         return ;
     }
-
-    enableBtn(false);
+    enableOperation(false);
     auto email = ui->email_edit->text();
     auto pwd = ui->pass_edit->text();
     //发送http请求登录
@@ -183,7 +228,8 @@ void LoginDialog::on_login_btn_clicked()
 void LoginDialog::slot_login_mod_finish(ReqId id, QString res, ErrorCodes err)
 {
     if(err != ErrorCodes::SUCCESS){
-        showTip(tr("网络请求错误"),false);
+        showTip(tr("网络请求错误"));
+        enableOperation(true);
         return;
     }
 
@@ -191,13 +237,13 @@ void LoginDialog::slot_login_mod_finish(ReqId id, QString res, ErrorCodes err)
     QJsonDocument jsonDoc = QJsonDocument::fromJson(res.toUtf8());
     //json解析错误
     if(jsonDoc.isNull()){
-        showTip(tr("json解析错误"),false);
+        showTip(tr("json解析错误"));
         return;
     }
 
     //json解析错误
     if(!jsonDoc.isObject()){
-        showTip(tr("json解析错误"),false);
+        showTip(tr("json解析错误"));
         return;
     }
 
@@ -212,7 +258,7 @@ void LoginDialog::slot_tcp_con_finish(bool bsuccess)
 {
 
    if(bsuccess){
-      showTip(tr("聊天服务连接成功，正在登录..."),true);
+      showTip(tr("聊天服务连接成功，正在登录..."));
       QJsonObject jsonObj;
       jsonObj["uid"] = _uid;
       jsonObj["token"] = _token;
@@ -224,8 +270,8 @@ void LoginDialog::slot_tcp_con_finish(bool bsuccess)
      emit TcpMgr::GetInstance()->sig_send_data(ReqId::ID_CHAT_LOGIN, jsonData);
 
    }else{
-      showTip(tr("网络异常"),false);
-      enableBtn(true);
+      showTip(tr("网络异常"));
+      enableOperation(true);
    }
 
 }
@@ -234,20 +280,6 @@ void LoginDialog::slot_login_failed(int err)
 {
     QString result = QString("登录失败, err is %1")
                              .arg(err);
-    showTip(result,false);
-    enableBtn(true);
-}
-
-void LoginDialog::AddTipErr(TipErr te,QString tips){
-    _tip_errs[te] = tips;
-    showTip(tips, false);
-}
-void LoginDialog::DelTipErr(TipErr te){
-    _tip_errs.remove(te);
-    if(_tip_errs.empty()){
-      ui->err_tip->clear();
-      return;
-    }
-
-    showTip(_tip_errs.first(), false);
+    showTip(result);
+    enableOperation(true);
 }

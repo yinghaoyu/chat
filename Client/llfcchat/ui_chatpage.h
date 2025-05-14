@@ -46,7 +46,6 @@ public:
     QWidget *send_wid;
     QHBoxLayout *horizontalLayout_4;
     QSpacerItem *horizontalSpacer_2;
-    ClickedBtn *receive_btn;
     QSpacerItem *horizontalSpacer_3;
     ClickedBtn *send_btn;
     QSpacerItem *horizontalSpacer_4;
@@ -154,13 +153,6 @@ public:
 
         horizontalLayout_4->addItem(horizontalSpacer_2);
 
-        receive_btn = new ClickedBtn(send_wid);
-        receive_btn->setObjectName(QString::fromUtf8("receive_btn"));
-        receive_btn->setMinimumSize(QSize(100, 30));
-        receive_btn->setMaximumSize(QSize(100, 30));
-
-        horizontalLayout_4->addWidget(receive_btn);
-
         horizontalSpacer_3 = new QSpacerItem(10, 20, QSizePolicy::Fixed, QSizePolicy::Minimum);
 
         horizontalLayout_4->addItem(horizontalSpacer_3);
@@ -194,7 +186,6 @@ public:
         title_lb->setText(QCoreApplication::translate("ChatPage", "\347\207\203\347\203\247\347\232\204\350\203\270\346\257\233", nullptr));
         emo_lb->setText(QString());
         file_lb->setText(QString());
-        receive_btn->setText(QCoreApplication::translate("ChatPage", "\346\216\245\346\224\266", nullptr));
         send_btn->setText(QCoreApplication::translate("ChatPage", "\345\217\221\351\200\201", nullptr));
     } // retranslateUi
 

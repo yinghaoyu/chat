@@ -53,5 +53,7 @@
         <file>res/settings_press.png</file>
         <file>res/settings_select_press.png</file>
         <file>res/settings_hover.png</file>
+        <file>res/email.png</file>
+        <file>res/passwd.png</file>
     </qresource>
 </RCC>

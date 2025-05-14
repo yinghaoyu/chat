@@ -36,6 +36,7 @@ release/loadingdlg.o
 release/logindialog.o
 release/main.o
 release/mainwindow.o
+release/notification.o
 release/registerdialog.o
 release/resetdialog.o
 release/searchlist.o
@@ -84,6 +85,7 @@ release/moc_listitembase.o
 release/moc_loadingdlg.o
 release/moc_logindialog.o
 release/moc_mainwindow.o
+release/moc_notification.o
 release/moc_registerdialog.o
 release/moc_resetdialog.o
 release/moc_searchlist.o

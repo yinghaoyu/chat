@@ -57,11 +57,11 @@ enum Modules{
 enum TipErr{
     TIP_SUCCESS = 0,
     TIP_EMAIL_ERR = 1,
-    TIP_PWD_ERR = 2,
-    TIP_CONFIRM_ERR = 3,
-    TIP_PWD_CONFIRM = 4,
-    TIP_VARIFY_ERR = 5,
-    TIP_USER_ERR = 6
+    TIP_USER_ERR = 3,
+    TIP_PWD_ERR = 4,
+    TIP_CONFIRM_ERR = 5,
+    TIP_PWD_CONFIRM = 6,
+    TIP_VARIFY_ERR = 7,
 };
 
 enum ClickLbState{

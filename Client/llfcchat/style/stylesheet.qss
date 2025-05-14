@@ -53,6 +53,14 @@ background-color:rgb(255,255,255)
     color:green;
 }
 
+#reg_label[state='normal'],#reg_label[state='selected']{
+    color:black;
+}
+
+#reg_label[state='hover'], #reg_label[state='selected_hover']{
+    color: rgb(42, 112, 241);
+}
+
 #forget_label[state='normal'],#forget_label[state='selected']{
     color:black;
 }

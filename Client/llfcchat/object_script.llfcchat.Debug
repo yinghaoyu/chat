@@ -36,6 +36,7 @@ debug/loadingdlg.o
 debug/logindialog.o
 debug/main.o
 debug/mainwindow.o
+debug/notification.o
 debug/registerdialog.o
 debug/resetdialog.o
 debug/searchlist.o
@@ -84,6 +85,7 @@ debug/moc_listitembase.o
 debug/moc_loadingdlg.o
 debug/moc_logindialog.o
 debug/moc_mainwindow.o
+debug/moc_notification.o
 debug/moc_registerdialog.o
 debug/moc_resetdialog.o
 debug/moc_searchlist.o
