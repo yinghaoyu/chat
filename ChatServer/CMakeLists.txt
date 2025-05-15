@@ -13,4 +13,5 @@ target_link_libraries(ChatServer
                       jsoncpp
                       mysqlclient
                       hiredis
+                      spdlog::spdlog
                       )

@@ -3,6 +3,7 @@ set(StatusServer_SRCS
     ChatGrpcClient.cc
     ConfigMgr.cc
     DistLock.cc
+    Logger.cc
     message.grpc.pb.cc
     message.pb.cc
     mysql.cc
@@ -25,4 +26,5 @@ target_link_libraries(StatusServer
                       jsoncpp
                       mysqlclient
                       hiredis
+                      spdlog::spdlog
                       )

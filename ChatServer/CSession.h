@@ -28,14 +28,14 @@ class CSession : public std::enable_shared_from_this<CSession>
   public:
     CSession(boost::asio::io_context& io_context, CServer* server);
     ~CSession();
-    tcp::socket&              GetSocket();
-    std::string&              GetSessionId();
-    void                      SetUserId(int uid);
-    int                       GetUserId();
-    void                      Start();
-    void                      Send(char* msg, short max_length, short msgid);
-    void                      Send(std::string msg, short msgid);
-    void                      Close();
+    tcp::socket& GetSocket();
+    std::string& GetSessionId();
+    void         SetUserId(int uid);
+    int          GetUserId();
+    void         Start();
+    void Send(const char* msg, const short max_length, const short msgid);
+    void Send(const std::string& msg, const short msgid);
+    void Close();
     std::shared_ptr<CSession> SharedSelf();
     void                      AsyncReadBody(int length);
     void                      AsyncReadHead(int total_len);

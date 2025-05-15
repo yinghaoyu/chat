@@ -1,5 +1,6 @@
 #include "MysqlDao.h"
 #include "ConfigMgr.h"
+#include "Logger.h"
 
 MysqlDao::MysqlDao()
 {
@@ -14,46 +15,101 @@ MysqlDao::MysqlDao()
 
 MysqlDao::~MysqlDao() {}
 
-int MysqlDao::RegUser(
-    const std::string& name, const std::string& email, const std::string& pwd)
+int MysqlDao::RegUser(const std::string& name, const std::string& email,
+    const std::string& pwd, const std::string& icon)
 {
     auto con = pool_->get();
     if (con == nullptr)
     {
-        std::cerr << "Failed to get connection from pool" << std::endl;
+        LOG_ERROR("Failed to get connection from pool");
         return -1;
     }
 
     try
     {
-        // 使用存储过程注册用户
-        auto stmt = con->prepare("CALL reg_user(?, ?, ?, @result)");
-        stmt->bindString(1, name);
-        stmt->bindString(2, email);
-        stmt->bindString(3, pwd);
-
-        // 执行存储过程
-        if (stmt->execute() != 0)
+        // 开始事务
+        MySQLTransaction::ptr tran = std::static_pointer_cast<MySQLTransaction>(
+            con->openTransaction(false));
+        if (!tran->begin())
         {
-            std::cerr << "Failed to execute stored procedure for RegUser"
-                      << std::endl;
+            std::cerr << "Failed to begin transaction" << std::endl;
             return -1;
         }
 
-        // 获取存储过程的输出参数
-        auto result = con->query("SELECT @result AS result");
-        if (result && result->next())
+        // 检查 email 是否已存在
+        auto emailCheck = tran->getMySQL()->queryStmt(
+            "SELECT 1 FROM user WHERE email = ?", email.c_str());
+
+        if (emailCheck && emailCheck->next())
         {
-            int regResult = result->getInt32(0);
-            std::cout << "RegUser result: " << regResult << std::endl;
-            return regResult;
+            tran->rollback();
+            std::cerr << "Email " << email << " already exists" << std::endl;
+            return 0;
         }
 
-        return -1;
+        // 检查 name 是否已存在
+        auto nameCheck = tran->getMySQL()->queryStmt(
+            "SELECT 1 FROM user WHERE name = ?", name.c_str());
+        if (nameCheck && nameCheck->next())
+        {
+            tran->rollback();
+            std::cerr << "Name " << name << " already exists" << std::endl;
+            return 0;
+        }
+
+        // 更新 user_id 表
+        if (tran->execute("UPDATE user_id SET id = id + 1") != 0)
+        {
+            tran->rollback();
+            std::cerr << "Failed to update user_id" << std::endl;
+            return -1;
+        }
+
+        // 获取新的用户 ID
+        auto userIdResult =
+            tran->getMySQL()->queryStmt("SELECT id FROM user_id");
+        int newId = 0;
+        if (userIdResult && userIdResult->next())
+        {
+            newId = userIdResult->getInt32(0);
+        }
+        else
+        {
+            tran->rollback();
+            std::cerr << "Failed to retrieve new user ID" << std::endl;
+            return -1;
+        }
+
+        // 插入新用户
+        if (tran->getMySQL()->execStmt(
+                "INSERT INTO user (uid, name, email, pwd, nick, icon) VALUES "
+                "(?, ?, ?, ?, ?, ?)",
+                newId,
+                name.c_str(),
+                email.c_str(),
+                pwd.c_str(),
+                name.c_str(),
+                icon.c_str()) != 0)
+        {
+            tran->rollback();
+            std::cerr << "Failed to insert new user" << std::endl;
+            return -1;
+        }
+
+        // 提交事务
+        if (!tran->commit())
+        {
+            std::cerr << "Failed to commit transaction" << std::endl;
+            return -1;
+        }
+
+        std::cout << "User registered successfully with ID: " << newId
+                  << std::endl;
+        return newId;
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Exception in RegUser: " << e.what() << std::endl;
+        LOG_ERROR("Exception in RegUser: {}", e.what());
         return -1;
     }
 }
@@ -63,7 +119,7 @@ bool MysqlDao::CheckEmail(const std::string& name, const std::string& email)
     auto con = pool_->get();
     if (con == nullptr)
     {
-        std::cerr << "Failed to get connection from pool" << std::endl;
+        LOG_ERROR("Failed to get connection from pool");
         return false;
     }
 
@@ -74,14 +130,13 @@ bool MysqlDao::CheckEmail(const std::string& name, const std::string& email)
         if (result && result->next())
         {
             std::string fetchedEmail = result->getString(0);
-            std::cout << "Check Email: " << fetchedEmail << std::endl;
             return fetchedEmail == email;
         }
         return false;
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Exception in CheckEmail: " << e.what() << std::endl;
+        LOG_ERROR("Exception in CheckEmail: {}", e.what());
         return false;
     }
 }
@@ -91,7 +146,7 @@ bool MysqlDao::UpdatePwd(const std::string& name, const std::string& newpwd)
     auto con = pool_->get();
     if (con == nullptr)
     {
-        std::cerr << "Failed to get connection from pool" << std::endl;
+        LOG_ERROR("Failed to get connection from pool");
         return false;
     }
 
@@ -102,41 +157,40 @@ bool MysqlDao::UpdatePwd(const std::string& name, const std::string& newpwd)
             name.c_str());
         if (ret == 0)
         {
-            std::cout << "Password updated successfully for user: " << name
-                      << std::endl;
+            LOG_DEBUG("Password updated successfully for user: {}", name);
             return true;
         }
         else
         {
-            std::cerr << "No rows affected for user: " << name << std::endl;
+            LOG_ERROR("No rows affected for user: {}", name);
             return false;
         }
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Exception in UpdatePwd: " << e.what() << std::endl;
+        LOG_ERROR("Exception in UpdatePwd: ", e.what());
         return false;
     }
 }
 
 bool MysqlDao::CheckPwd(
-    const std::string& name, const std::string& pwd, UserInfo& userInfo)
+    const std::string& email, const std::string& pwd, UserInfo& userInfo)
 {
     auto con = pool_->get();
     if (con == nullptr)
     {
-        std::cerr << "Failed to get connection from pool" << std::endl;
+        LOG_ERROR("Failed to get connection from pool");
         return false;
     }
 
     try
     {
-        // 使用 queryStmt 执行查询
         auto result = con->queryStmt(
-            "SELECT uid, email, pwd FROM user WHERE name = ?", name.c_str());
+            "SELECT uid, name, email, pwd FROM user WHERE email = ?",
+            email.c_str());
         if (result && result->next())
         {
-            std::string origin_pwd = result->getString(2);
+            std::string origin_pwd = result->getString(3);
             if (pwd != origin_pwd)
             {
                 return false;
@@ -144,8 +198,8 @@ bool MysqlDao::CheckPwd(
 
             // 填充 userInfo
             userInfo.uid   = result->getInt32(0);
-            userInfo.name  = name;
-            userInfo.email = result->getString(1);
+            userInfo.name  = result->getString(1);
+            userInfo.email = result->getString(2);
             userInfo.pwd   = origin_pwd;
 
             return true;
@@ -154,7 +208,7 @@ bool MysqlDao::CheckPwd(
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Exception in CheckPwd: " << e.what() << std::endl;
+        LOG_ERROR("Exception in CheckPwd: {}", e.what());
         return false;
     }
 }
@@ -164,7 +218,7 @@ bool MysqlDao::AddFriendApply(const int from, const int to)
     auto con = pool_->get();
     if (con == nullptr)
     {
-        std::cerr << "Failed to get connection from pool" << std::endl;
+        LOG_ERROR("Failed to get connection from pool");
         return false;
     }
 
@@ -179,20 +233,18 @@ bool MysqlDao::AddFriendApply(const int from, const int to)
 
         if (ret == 0)
         {
-            std::cout << "Friend apply added or updated successfully: from "
-                      << from << " to " << to << std::endl;
+            LOG_DEBUG("Friend apply added or updated successfully, fromuid: {}, touid: {}", from, to);
             return true;
         }
         else
         {
-            std::cerr << "No rows affected for friend apply: from " << from
-                      << " to " << to << std::endl;
+            LOG_ERROR("No rows affected for friend apply, fromuid: {}, touid: {} ", from, to);
             return false;
         }
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Exception in AddFriendApply: " << e.what() << std::endl;
+        LOG_ERROR("Exception in AddFriendApply: {}", e.what());
         return false;
     }
 }
@@ -202,7 +254,7 @@ bool MysqlDao::AuthFriendApply(const int from, const int to)
     auto con = pool_->get();
     if (con == nullptr)
     {
-        std::cerr << "Failed to get connection from pool" << std::endl;
+        LOG_ERROR("Failed to get connection from pool");
         return false;
     }
 
@@ -216,21 +268,18 @@ bool MysqlDao::AuthFriendApply(const int from, const int to)
 
         if (ret == 0)
         {
-            std::cout << "Friend apply authenticated successfully: from "
-                      << from << " to " << to << std::endl;
+            LOG_DEBUG("Friend apply authenticated successfully, fromuid: {}, touid: {}", from, to);
             return true;
         }
         else
         {
-            std::cerr
-                << "No rows affected for friend apply authentication: from "
-                << from << " to " << to << std::endl;
+            LOG_ERROR("No rows affected for friend apply authentication, fromuid: {}, touid: {}", from, to);
             return false;
         }
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Exception in AuthFriendApply: " << e.what() << std::endl;
+        LOG_ERROR("Exception in AuthFriendApply: {}", e.what());
         return false;
     }
 }
@@ -241,7 +290,7 @@ bool MysqlDao::AddFriend(
     auto con = pool_->get();
     if (con == nullptr)
     {
-        std::cerr << "Failed to get connection from pool" << std::endl;
+        LOG_ERROR("Failed to get connection from pool");
         return false;
     }
 
@@ -252,7 +301,7 @@ bool MysqlDao::AddFriend(
             con->openTransaction(false));
         if (!tran->begin())
         {
-            std::cerr << "Failed to begin transaction" << std::endl;
+            LOG_ERROR("Failed to begin transaction");
             return false;
         }
 
@@ -266,8 +315,7 @@ bool MysqlDao::AddFriend(
         if (ret != 0)
         {
             tran->rollback();
-            std::cerr << "Failed to insert friend for user: " << from
-                      << std::endl;
+            LOG_ERROR("Failed to insert friend for user: {}", from);
             return false;
         }
 
@@ -280,25 +328,23 @@ bool MysqlDao::AddFriend(
         if (ret != 0)
         {
             tran->rollback();
-            std::cerr << "Failed to insert friend for user: " << to
-                      << std::endl;
+            LOG_ERROR("Failed to insert friend for user: {}", to);
             return false;
         }
 
         // 提交事务
         if (!tran->commit())
         {
-            std::cerr << "Failed to commit transaction" << std::endl;
+            LOG_ERROR("Failed to commit transaction");
             return false;
         }
 
-        std::cout << "Friend relationship added successfully: from " << from
-                  << " to " << to << std::endl;
+        LOG_DEBUG("Friend relationship added successfully, fromuid: {}, touid: {}", from, to);
         return true;
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Exception in AddFriend: " << e.what() << std::endl;
+        LOG_ERROR("Exception in AddFriend: {}", e.what());
         return false;
     }
 }
@@ -308,7 +354,7 @@ std::shared_ptr<UserInfo> MysqlDao::GetUser(const int uid)
     auto con = pool_->get();
     if (con == nullptr)
     {
-        std::cerr << "Failed to get connection from pool" << std::endl;
+        LOG_ERROR("Failed to get connection from pool");
         return nullptr;
     }
 
@@ -336,7 +382,7 @@ std::shared_ptr<UserInfo> MysqlDao::GetUser(const int uid)
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Exception in GetUser: " << e.what() << std::endl;
+        LOG_ERROR("Exception in GetUser: {}" ,e.what());
         return nullptr;
     }
 }
@@ -346,7 +392,7 @@ std::shared_ptr<UserInfo> MysqlDao::GetUser(const std::string& name)
     auto con = pool_->get();
     if (con == nullptr)
     {
-        std::cerr << "Failed to get connection from pool" << std::endl;
+        LOG_ERROR("Failed to get connection from pool");
         return nullptr;
     }
 
@@ -373,7 +419,7 @@ std::shared_ptr<UserInfo> MysqlDao::GetUser(const std::string& name)
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Exception in GetUser: " << e.what() << std::endl;
+        LOG_ERROR("Exception in GetUser: {}", e.what());
         return nullptr;
     }
 }
@@ -384,7 +430,7 @@ bool MysqlDao::GetApplyList(const int        touid,
     auto con = pool_->get();
     if (con == nullptr)
     {
-        std::cerr << "Failed to get connection from pool" << std::endl;
+        LOG_ERROR("Failed to get connection from pool");
         return false;
     }
 
@@ -418,7 +464,7 @@ bool MysqlDao::GetApplyList(const int        touid,
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Exception in GetApplyList: " << e.what() << std::endl;
+        LOG_ERROR("Exception in GetApplyList: {}", e.what());
         return false;
     }
 }
@@ -429,7 +475,7 @@ bool MysqlDao::GetFriendList(
     auto con = pool_->get();
     if (con == nullptr)
     {
-        std::cerr << "Failed to get connection from pool" << std::endl;
+        LOG_ERROR("Failed to get connection from pool");
         return false;
     }
 
@@ -462,7 +508,7 @@ bool MysqlDao::GetFriendList(
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Exception in GetFriendList: " << e.what() << std::endl;
+        LOG_ERROR("Exception in GetFriendList: {}", e.what());
         return false;
     }
 }

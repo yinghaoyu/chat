@@ -8,7 +8,7 @@
 #include "RedisMgr.h"
 #include "ChatServiceImpl.h"
 #include "const.h"
-
+#include "Logger.h"
 #include "MysqlMgr.h"
 
 #include <csignal>
@@ -16,9 +16,6 @@
 #include <mutex>
 
 using namespace std;
-bool                    bstop = false;
-std::condition_variable cond_quit;
-std::mutex              mutex_quit;
 
 int main()
 {
@@ -55,7 +52,7 @@ int main()
         service.RegisterServer(pointer_server);
         // 构建并启动gRPC服务器
         std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
-        std::cout << "RPC Server listening on " << server_address << std::endl;
+        LOG_INFO("gRPC Server listening on {}", server_address);
 
         // 单独启动一个线程处理grpc服务
         std::thread grpc_server_thread([&server]() { server->Wait(); });
@@ -63,6 +60,7 @@ int main()
         boost::asio::signal_set signals(io_context, SIGINT, SIGTERM);
         signals.async_wait(
             [&io_context, pool, &pointer_server, &server](auto, auto) {
+                LOG_INFO("Stopping server...");
                 // FIXME(yinghaoyu):
                 // 这里timer.cancel()与io_context.stop()在Windows和Linux表现不一样
                 // Windows先调用timer.cancel()，后调用io_context.stop()会产生dump
@@ -80,6 +78,6 @@ int main()
     }
     catch (std::exception& e)
     {
-        std::cerr << "Exception: " << e.what() << endl;
+        LOG_ERROR("Exception: {}", e.what());
     }
 }

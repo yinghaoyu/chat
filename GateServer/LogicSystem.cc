@@ -4,6 +4,7 @@
 #include "RedisMgr.h"
 #include "MysqlMgr.h"
 #include "StatusGrpcClient.h"
+#include "Logger.h"
 
 LogicSystem::LogicSystem()
 {
@@ -26,7 +27,7 @@ LogicSystem::LogicSystem()
     RegPost("/get_varifycode", [](std::shared_ptr<HttpConnection> connection) {
         auto body_str =
             boost::beast::buffers_to_string(connection->_request.body().data());
-        std::cout << "receive body is " << body_str << std::endl;
+        LOG_INFO("Request target:{} receive: {}", connection->_request.target(), body_str);
         connection->_response.set(http::field::content_type, "text/json");
         Json::Value  root;
         Json::Reader reader;
@@ -34,7 +35,7 @@ LogicSystem::LogicSystem()
         bool         parse_success = reader.parse(body_str, src_root);
         if (!parse_success)
         {
-            std::cout << "Failed to parse JSON data!" << std::endl;
+            LOG_ERROR("Failed to parse JSON data");
             root["error"]       = ErrorCodes::Error_Json;
             std::string jsonstr = root.toStyledString();
             beast::ostream(connection->_response.body()) << jsonstr;
@@ -43,7 +44,7 @@ LogicSystem::LogicSystem()
 
         if (!src_root.isMember("email"))
         {
-            std::cout << "Failed to parse JSON data!" << std::endl;
+            LOG_ERROR("Failed to parse JSON data");
             root["error"]       = ErrorCodes::Error_Json;
             std::string jsonstr = root.toStyledString();
             beast::ostream(connection->_response.body()) << jsonstr;
@@ -60,11 +61,11 @@ LogicSystem::LogicSystem()
         beast::ostream(connection->_response.body()) << jsonstr;
         return true;
     });
-    // day11 注册用户逻辑
+
     RegPost("/user_register", [](std::shared_ptr<HttpConnection> connection) {
         auto body_str =
             boost::beast::buffers_to_string(connection->_request.body().data());
-        std::cout << "receive body is " << body_str << std::endl;
+        LOG_INFO("Request target:{} receive: {}", connection->_request.target(), body_str);
         connection->_response.set(http::field::content_type, "text/json");
         Json::Value  root;
         Json::Reader reader;
@@ -72,7 +73,7 @@ LogicSystem::LogicSystem()
         bool         parse_success = reader.parse(body_str, src_root);
         if (!parse_success)
         {
-            std::cout << "Failed to parse JSON data!" << std::endl;
+            LOG_ERROR("Failed to parse JSON data");
             root["error"]       = ErrorCodes::Error_Json;
             std::string jsonstr = root.toStyledString();
             beast::ostream(connection->_response.body()) << jsonstr;
@@ -87,7 +88,7 @@ LogicSystem::LogicSystem()
 
         if (pwd != confirm)
         {
-            std::cout << "password err " << std::endl;
+            LOG_ERROR("password not match");
             root["error"]       = ErrorCodes::PasswdErr;
             std::string jsonstr = root.toStyledString();
             beast::ostream(connection->_response.body()) << jsonstr;
@@ -100,7 +101,7 @@ LogicSystem::LogicSystem()
             CODEPREFIX + src_root["email"].asString(), varify_code);
         if (!b_get_varify)
         {
-            std::cout << " get varify code expired" << std::endl;
+            LOG_INFO("get varify code expired");
             root["error"]       = ErrorCodes::VarifyExpired;
             std::string jsonstr = root.toStyledString();
             beast::ostream(connection->_response.body()) << jsonstr;
@@ -109,7 +110,7 @@ LogicSystem::LogicSystem()
 
         if (varify_code != src_root["varifycode"].asString())
         {
-            std::cout << " varify code error" << std::endl;
+            LOG_INFO("varify code error");
             root["error"]       = ErrorCodes::VarifyCodeErr;
             std::string jsonstr = root.toStyledString();
             beast::ostream(connection->_response.body()) << jsonstr;
@@ -120,7 +121,7 @@ LogicSystem::LogicSystem()
         int uid = MysqlMgr::GetInstance()->RegUser(name, email, pwd, icon);
         if (uid == 0 || uid == -1)
         {
-            std::cout << " user or email exist" << std::endl;
+            LOG_INFO("user or email exist");
             root["error"]       = ErrorCodes::UserExist;
             std::string jsonstr = root.toStyledString();
             beast::ostream(connection->_response.body()) << jsonstr;
@@ -143,7 +144,7 @@ LogicSystem::LogicSystem()
     RegPost("/reset_pwd", [](std::shared_ptr<HttpConnection> connection) {
         auto body_str =
             boost::beast::buffers_to_string(connection->_request.body().data());
-        std::cout << "receive body is " << body_str << std::endl;
+        LOG_INFO("Request target:{} receive: {}", connection->_request.target(), body_str);
         connection->_response.set(http::field::content_type, "text/json");
         Json::Value  root;
         Json::Reader reader;
@@ -151,7 +152,7 @@ LogicSystem::LogicSystem()
         bool         parse_success = reader.parse(body_str, src_root);
         if (!parse_success)
         {
-            std::cout << "Failed to parse JSON data!" << std::endl;
+            LOG_ERROR("Failed to parse JSON data");
             root["error"]       = ErrorCodes::Error_Json;
             std::string jsonstr = root.toStyledString();
             beast::ostream(connection->_response.body()) << jsonstr;
@@ -168,7 +169,7 @@ LogicSystem::LogicSystem()
             CODEPREFIX + src_root["email"].asString(), varify_code);
         if (!b_get_varify)
         {
-            std::cout << " get varify code expired" << std::endl;
+            LOG_INFO("get varify code expired");
             root["error"]       = ErrorCodes::VarifyExpired;
             std::string jsonstr = root.toStyledString();
             beast::ostream(connection->_response.body()) << jsonstr;
@@ -177,7 +178,7 @@ LogicSystem::LogicSystem()
 
         if (varify_code != src_root["varifycode"].asString())
         {
-            std::cout << " varify code error" << std::endl;
+            LOG_INFO("varify code error");
             root["error"]       = ErrorCodes::VarifyCodeErr;
             std::string jsonstr = root.toStyledString();
             beast::ostream(connection->_response.body()) << jsonstr;
@@ -187,7 +188,7 @@ LogicSystem::LogicSystem()
         bool email_valid = MysqlMgr::GetInstance()->CheckEmail(name, email);
         if (!email_valid)
         {
-            std::cout << " user email not match" << std::endl;
+            LOG_INFO("user email not match");
             root["error"]       = ErrorCodes::EmailNotMatch;
             std::string jsonstr = root.toStyledString();
             beast::ostream(connection->_response.body()) << jsonstr;
@@ -198,14 +199,13 @@ LogicSystem::LogicSystem()
         bool b_up = MysqlMgr::GetInstance()->UpdatePwd(name, pwd);
         if (!b_up)
         {
-            std::cout << " update pwd failed" << std::endl;
+            LOG_INFO("update password failed");
             root["error"]       = ErrorCodes::PasswdUpFailed;
             std::string jsonstr = root.toStyledString();
             beast::ostream(connection->_response.body()) << jsonstr;
             return true;
         }
-
-        std::cout << " succeed to update password: " << pwd << std::endl;
+        LOG_INFO("update password succeed");
         root["error"]       = 0;
         root["email"]       = email;
         root["user"]        = name;
@@ -220,7 +220,7 @@ LogicSystem::LogicSystem()
     RegPost("/user_login", [](std::shared_ptr<HttpConnection> connection) {
         auto body_str =
             boost::beast::buffers_to_string(connection->_request.body().data());
-        std::cout << "receive body is " << body_str << std::endl;
+        LOG_INFO("Request target:{} receive: {}", connection->_request.target(), body_str);
         connection->_response.set(http::field::content_type, "text/json");
         Json::Value  root;
         Json::Reader reader;
@@ -228,7 +228,7 @@ LogicSystem::LogicSystem()
         bool         parse_success = reader.parse(body_str, src_root);
         if (!parse_success)
         {
-            std::cout << "Failed to parse JSON data!" << std::endl;
+            LOG_ERROR("Failed to parse JSON data");
             root["error"]       = ErrorCodes::Error_Json;
             std::string jsonstr = root.toStyledString();
             beast::ostream(connection->_response.body()) << jsonstr;
@@ -243,28 +243,26 @@ LogicSystem::LogicSystem()
             MysqlMgr::GetInstance()->CheckPwd(email, pwd, userInfo);
         if (!pwd_valid)
         {
-            std::cout << " user pwd not match" << std::endl;
+            LOG_INFO("user email not match");
             root["error"]       = ErrorCodes::PasswdInvalid;
             std::string jsonstr = root.toStyledString();
             beast::ostream(connection->_response.body()) << jsonstr;
             return true;
         }
 
+        LOG_INFO("gRpc get chat server begin uid: {}", userInfo.uid);
         // 查询StatusServer找到合适的连接
         auto reply =
             StatusGrpcClient::GetInstance()->GetChatServer(userInfo.uid);
         if (reply.error())
         {
-            std::cout << " grpc get chat server failed, error is "
-                      << reply.error() << std::endl;
+            LOG_ERROR("get chat server failed error: {}", reply.error());
             root["error"]       = ErrorCodes::RPCFailed;
             std::string jsonstr = root.toStyledString();
             beast::ostream(connection->_response.body()) << jsonstr;
             return true;
         }
-
-        std::cout << "get chatserver success uid: " << userInfo.uid
-                  << std::endl;
+        LOG_INFO("gRPC get chat server success uid: {}", userInfo.uid);
 
         root["error"]       = 0;
         root["email"]       = email;

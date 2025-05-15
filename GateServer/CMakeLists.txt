@@ -5,6 +5,7 @@ set(GateServer_SRCS
     DistLock.cc
     GateServer.cc
     HttpConnection.cc
+    Logger.cc
     LogicSystem.cc
     message.grpc.pb.cc
     message.pb.cc
@@ -28,4 +29,5 @@ target_link_libraries(GateServer
                       jsoncpp
                       mysqlclient
                       hiredis
+                      spdlog::spdlog
                       )

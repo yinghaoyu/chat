@@ -1,5 +1,6 @@
 #include "HttpConnection.h"
 #include "LogicSystem.h"
+#include "Logger.h"
 
 HttpConnection::HttpConnection(boost::asio::io_context& ioc) : _socket(ioc) {}
 
@@ -15,7 +16,7 @@ void HttpConnection::Start()
             {
                 if (ec)
                 {
-                    std::cout << "http read err is " << ec.what() << std::endl;
+                    LOG_ERROR("http read err is {}", ec.message());
                     return;
                 }
 
@@ -27,7 +28,7 @@ void HttpConnection::Start()
             }
             catch (std::exception& exp)
             {
-                std::cout << "exception is " << exp.what() << std::endl;
+                LOG_ERROR("Exception: {}", exp.what());
             }
         });
 }

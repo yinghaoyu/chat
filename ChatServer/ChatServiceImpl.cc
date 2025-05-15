@@ -3,6 +3,7 @@
 #include "CSession.h"
 #include "RedisMgr.h"
 #include "MysqlMgr.h"
+#include "Logger.h"
 
 #include <jsoncpp/json/json.h>
 #include <jsoncpp/json/value.h>
@@ -26,9 +27,10 @@ Status ChatServiceImpl::NotifyAddFriend(
     // 用户不在内存中则直接返回
     if (session == nullptr)
     {
+        LOG_ERROR("NotifyAddFriend user not in memory, uid: {}", touid);
         return Status::OK;
     }
-
+    LOG_INFO("NotifyAddFriend user in memory, uid: {}", touid);
     // 在内存中则直接发送通知对方
     Json::Value rtvalue;
     rtvalue["error"]    = ErrorCodes::Success;
@@ -62,6 +64,7 @@ Status ChatServiceImpl::NotifyAuthFriend(
     // 用户不在内存中则直接返回
     if (session == nullptr)
     {
+        LOG_ERROR("NotifyAuthFriend user not in memory, uid: {}", touid);
         return Status::OK;
     }
 
@@ -148,20 +151,29 @@ bool ChatServiceImpl::GetBaseInfo(
         userinfo->desc  = root["desc"].asString();
         userinfo->sex   = root["sex"].asInt();
         userinfo->icon  = root["icon"].asString();
-        std::cout << "User login uid: " << userinfo->uid
-                  << ",name: " << userinfo->name << ",pwd: " << userinfo->pwd
-                  << ",email: " << userinfo->email << endl;
+        LOG_INFO("Redis get user info, uid: {}, name, {}, pwd: {}, email: {}, "
+                 "nick: {}, desc: {}, sex: {}, icon: {}",uid,
+            userinfo->name, userinfo->pwd, userinfo->email, userinfo->nick,
+            userinfo->desc, userinfo->sex, userinfo->icon);
     }
     else
     {
+        LOG_INFO("Redis get user info failed, key: {}", base_key);
+        LOG_INFO("Mysql get user info, uid: {}", uid);
         // redis中没有则查询mysql
         // 查询数据库
         std::shared_ptr<UserInfo> user_info = nullptr;
         user_info = MysqlMgr::GetInstance()->GetUser(uid);
         if (user_info == nullptr)
         {
+            LOG_ERROR("Mysql get user info failed, uid: {}", uid);
             return false;
         }
+
+        LOG_INFO("Mysql get user info success, uid: {}, name: {}, pwd: {}, "
+                 "email: {}, nick: {}, desc: {}, sex: {}, icon: {}",
+            uid, user_info->name, user_info->pwd, user_info->email,
+            user_info->nick, user_info->desc, user_info->sex,user_info->icon);
 
         userinfo = user_info;
 
@@ -196,9 +208,10 @@ Status ChatServiceImpl::NotifyKickUser(::grpc::ServerContext* context,
     // 用户不在内存中则直接返回
     if (session == nullptr)
     {
+        LOG_ERROR("NotifyKickUser user not in memory, uid: {}", uid);
         return Status::OK;
     }
-
+    LOG_INFO("NotifyKickUser user in memory, uid: {}", uid);
     // 在内存中则直接发送通知对方
     session->NotifyOffline(uid);
     // 清除旧的连接

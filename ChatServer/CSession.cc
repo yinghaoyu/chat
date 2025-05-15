@@ -3,6 +3,7 @@
 #include "LogicSystem.h"
 #include "RedisMgr.h"
 #include "ConfigMgr.h"
+#include "Logger.h"
 
 #include <iostream>
 #include <sstream>
@@ -34,37 +35,19 @@ int CSession::GetUserId() { return _user_uid; }
 
 void CSession::Start() { AsyncReadHead(HEAD_TOTAL_LEN); }
 
-void CSession::Send(std::string msg, short msgid)
+void CSession::Send(const std::string& msg, const short msgid)
 {
-    std::lock_guard<std::mutex> lock(_send_lock);
-    int                         send_que_size = _send_que.size();
-    if (send_que_size > MAX_SENDQUE)
-    {
-        std::cout << "session: " << _session_id
-                  << " send que fulled, size: " << MAX_SENDQUE << endl;
-        return;
-    }
-
-    _send_que.push(make_shared<SendNode>(msg.c_str(), msg.length(), msgid));
-    if (send_que_size > 0)
-    {
-        return;
-    }
-    auto& msgnode = _send_que.front();
-    boost::asio::async_write(_socket,
-        boost::asio::buffer(msgnode->_data, msgnode->_total_len),
-        std::bind(
-            &CSession::HandleWrite, this, std::placeholders::_1, SharedSelf()));
+    Send(msg.c_str(), msg.length(), msgid);
 }
 
-void CSession::Send(char* msg, short max_length, short msgid)
+void CSession::Send(const char* msg, const short max_length, const short msgid)
 {
     std::lock_guard<std::mutex> lock(_send_lock);
     int                         send_que_size = _send_que.size();
     if (send_que_size > MAX_SENDQUE)
     {
-        std::cout << "session: " << _session_id
-                  << " send que fulled, size: " << MAX_SENDQUE << endl;
+        LOG_ERROR("session: {} send que fulled, size: {}", _session_id,
+            MAX_SENDQUE);
         return;
     }
 
@@ -99,8 +82,9 @@ void CSession::AsyncReadBody(int total_len)
             {
                 if (ec)
                 {
-                    std::cout << "handle read failed, error: " << ec.what()
-                              << endl;
+                    LOG_ERROR("session: {} handle read failed, error: {}",
+                        _session_id,
+                        ec.message());
                     Close();
                     DealExceptionSession();
                     return;
@@ -108,9 +92,11 @@ void CSession::AsyncReadBody(int total_len)
 
                 if (bytes_transfered < total_len)
                 {
-                    std::cout << "read length not match, read ["
-                              << bytes_transfered << "] , total [" << total_len
-                              << "]" << endl;
+                    LOG_INFO("session: {} read length not match, read: {} , total: {}",
+                        _session_id,
+                        bytes_transfered,
+                        total_len);
+
                     Close();
                     _server->ClearSession(_session_id);
                     return;
@@ -126,7 +112,7 @@ void CSession::AsyncReadBody(int total_len)
                 memcpy(_recv_msg_node->_data, _data, bytes_transfered);
                 _recv_msg_node->_cur_len += bytes_transfered;
                 _recv_msg_node->_data[_recv_msg_node->_total_len] = '\0';
-                cout << "receive data is " << _recv_msg_node->_data << endl;
+                LOG_INFO("session: {} recv msg data: {}", _session_id, _recv_msg_node->_data);
                 // 更新session心跳时间
                 UpdateHeartbeat();
                 // 此处将消息投递到逻辑队列中
@@ -137,7 +123,9 @@ void CSession::AsyncReadBody(int total_len)
             }
             catch (std::exception& e)
             {
-                std::cout << "Exception code is " << e.what() << endl;
+                LOG_ERROR("session: {} handle read exception, error: {}",
+                    _session_id,
+                    e.what());
             }
         });
 }
@@ -152,8 +140,9 @@ void CSession::AsyncReadHead(int total_len)
             {
                 if (ec)
                 {
-                    std::cout << "handle read failed, error is " << ec.what()
-                              << endl;
+                    LOG_ERROR("session: {} handle read failed, error: {}",
+                        _session_id,
+                        ec.message());
                     Close();
                     DealExceptionSession();
                     return;
@@ -161,9 +150,10 @@ void CSession::AsyncReadHead(int total_len)
 
                 if (bytes_transfered < HEAD_TOTAL_LEN)
                 {
-                    std::cout << "read length not match, read ["
-                              << bytes_transfered << "] , total ["
-                              << HEAD_TOTAL_LEN << "]" << endl;
+                    LOG_INFO("session: {} read length not match, read: {} , total: {}",
+                        _session_id,
+                        bytes_transfered,
+                        HEAD_TOTAL_LEN);
                     Close();
                     _server->ClearSession(_session_id);
                     return;
@@ -172,6 +162,7 @@ void CSession::AsyncReadHead(int total_len)
                 // 判断连接无效
                 if (!_server->CheckValid(_session_id))
                 {
+                    LOG_ERROR("session: {} check valid failed", _session_id);
                     Close();
                     return;
                 }
@@ -185,11 +176,11 @@ void CSession::AsyncReadHead(int total_len)
                 // 网络字节序转化为本地字节序
                 msg_id = boost::asio::detail::socket_ops::network_to_host_short(
                     msg_id);
-                std::cout << "msg_id is " << msg_id << endl;
+                LOG_TRACE("session: {} msg_id: {}", _session_id, msg_id);
                 // id非法
                 if (msg_id > MAX_LENGTH)
                 {
-                    std::cout << "invalid msg_id is " << msg_id << endl;
+                    LOG_ERROR("session: {} msg_id invalid, msg_id: {}", _session_id, msg_id);
                     _server->ClearSession(_session_id);
                     return;
                 }
@@ -201,12 +192,13 @@ void CSession::AsyncReadHead(int total_len)
                 msg_len =
                     boost::asio::detail::socket_ops::network_to_host_short(
                         msg_len);
-                std::cout << "msg_len is " << msg_len << endl;
+
+                LOG_TRACE("session: {} msg_len: {}", _session_id, msg_len);
 
                 // id非法
                 if (msg_len > MAX_LENGTH)
                 {
-                    std::cout << "invalid data length is " << msg_len << endl;
+                    LOG_ERROR("session: {} msg_id length, length: {}", _session_id, msg_len);
                     _server->ClearSession(_session_id);
                     return;
                 }
@@ -216,7 +208,9 @@ void CSession::AsyncReadHead(int total_len)
             }
             catch (std::exception& e)
             {
-                std::cout << "Exception code is " << e.what() << endl;
+                LOG_ERROR("session: {} handle read exception, error: {}",
+                    _session_id,
+                    e.what());
             }
         });
 }
@@ -227,35 +221,36 @@ void CSession::HandleWrite(const boost::system::error_code& error,
     // 增加异常处理
     try
     {
-        auto self = shared_from_this();
-        if (!error)
+        if (error)
         {
-            std::lock_guard<std::mutex> lock(_send_lock);
-            // cout << "send data " << _send_que.front()->_data+HEAD_LENGTH <<
-            // endl;
-            _send_que.pop();
-            if (!_send_que.empty())
-            {
-                auto& msgnode = _send_que.front();
-                boost::asio::async_write(_socket,
-                    boost::asio::buffer(msgnode->_data, msgnode->_total_len),
-                    std::bind(&CSession::HandleWrite,
-                        this,
-                        std::placeholders::_1,
-                        shared_self));
-            }
-        }
-        else
-        {
-            std::cout << "handle write failed, error is " << error.what()
-                      << endl;
+            LOG_ERROR("session: {} handle write failed, error: {}",
+                _session_id,
+                error.message());
             Close();
             DealExceptionSession();
+        }
+
+        auto self = shared_from_this();
+
+        std::lock_guard<std::mutex> lock(_send_lock);
+
+        _send_que.pop();
+        if (!_send_que.empty())
+        {
+            auto& msgnode = _send_que.front();
+            boost::asio::async_write(_socket,
+                boost::asio::buffer(msgnode->_data, msgnode->_total_len),
+                std::bind(&CSession::HandleWrite,
+                    this,
+                    std::placeholders::_1,
+                    shared_self));
         }
     }
     catch (std::exception& e)
     {
-        std::cerr << "Exception code : " << e.what() << endl;
+        LOG_ERROR("session: {} handle write exception, error: {}",
+            _session_id,
+            e.what());
     }
 }
 
@@ -303,7 +298,7 @@ void CSession::NotifyOffline(int uid)
     rtvalue["uid"]   = uid;
 
     std::string return_str = rtvalue.toStyledString();
-
+    LOG_INFO("session: {} notify offline, uid: {}", _session_id, uid);
     Send(return_str, ID_NOTIFY_OFF_LINE_REQ);
     return;
 }
@@ -318,8 +313,8 @@ bool CSession::IsHeartbeatExpired(std::time_t& now)
     double diff_sec = std::difftime(now, _last_heartbeat);
     if (diff_sec > 20)
     {
-        std::cout << "heartbeat expired, session id is  " << _session_id
-                  << endl;
+        LOG_INFO("session: {} heartbeat expired, diff sec: {}", _session_id,
+            diff_sec);
         return true;
     }
 
@@ -336,10 +331,16 @@ void CSession::DealExceptionSession()
 {
     auto self = shared_from_this();
     // 加锁清除session
-    auto uid_str    = std::to_string(_user_uid);
-    auto lock_key   = LOCK_PREFIX + uid_str;
+    auto uid_str  = std::to_string(_user_uid);
+    auto lock_key = LOCK_PREFIX + uid_str;
+
+    LOG_INFO("Redis get user lock begin, session: {}, key: {}", _session_id, lock_key);
+
     auto identifier = RedisMgr::GetInstance()->acquireLock(
         lock_key, LOCK_TIME_OUT, ACQUIRE_TIME_OUT);
+
+    LOG_INFO("Redis get user lock finish, session: {}, key: {}", _session_id, lock_key);
+
     Defer defer([identifier, lock_key, self, this]() {
         _server->ClearSession(_session_id);
         RedisMgr::GetInstance()->releaseLock(lock_key, identifier);
@@ -347,6 +348,7 @@ void CSession::DealExceptionSession()
 
     if (identifier.empty())
     {
+        LOG_INFO("Redis get redis user lock failed, session: {}, key: {}", _session_id, lock_key);
         return;
     }
     std::string redis_session_id = "";
@@ -354,14 +356,23 @@ void CSession::DealExceptionSession()
         USER_SESSION_PREFIX + uid_str, redis_session_id);
     if (!bsuccess)
     {
+        LOG_ERROR("Redis get session id failed, session: {}, key: {}",
+            _session_id,
+            USER_SESSION_PREFIX + uid_str);
         return;
     }
 
     if (redis_session_id != _session_id)
     {
         // 说明有客户在其他服务器异地登录了
+        LOG_INFO("new session established, uid: {}, old session: {}, redis_session: {}",
+            _user_uid,
+            _session_id,
+            redis_session_id);
         return;
     }
+
+    LOG_INFO("Redis clear user login trace, uid: {}", _user_uid);
 
     RedisMgr::GetInstance()->Del(USER_SESSION_PREFIX + uid_str);
     // 清除用户登录信息

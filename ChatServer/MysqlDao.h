@@ -15,11 +15,11 @@ class MysqlDao
     MysqlDao();
     ~MysqlDao();
     int  RegUser(const std::string& name, const std::string& email,
-         const std::string& pwd);
+         const std::string& pwd, const std::string& icon);
     bool CheckEmail(const std::string& name, const std::string& email);
     bool UpdatePwd(const std::string& name, const std::string& newpwd);
     bool CheckPwd(
-        const std::string& name, const std::string& pwd, UserInfo& userInfo);
+        const std::string& email, const std::string& pwd, UserInfo& userInfo);
     bool AddFriendApply(const int from, const int to);
     bool AuthFriendApply(const int from, const int to);
     bool AddFriend(const int from, const int to, const std::string& back_name);

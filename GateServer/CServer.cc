@@ -1,6 +1,7 @@
 #include "CServer.h"
 #include "HttpConnection.h"
 #include "AsioIOServicePool.h"
+#include "Logger.h"
 
 #include <iostream>
 
@@ -32,7 +33,7 @@ void CServer::Start()
             }
             catch (std::exception& exp)
             {
-                std::cout << "exception is " << exp.what() << std::endl;
+                LOG_ERROR("Exception: {}", exp.what());
                 self->Start();
             }
         });

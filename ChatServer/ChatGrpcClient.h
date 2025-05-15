@@ -86,10 +86,6 @@ class ChatConPool
     void returnConnection(std::unique_ptr<ChatService::Stub> context)
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        if (b_stop_)
-        {
-            return;
-        }
         connections_.push(std::move(context));
         cond_.notify_one();
     }

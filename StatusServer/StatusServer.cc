@@ -7,6 +7,7 @@
 #include "AsioIOServicePool.h"
 #include "const.h"
 #include "ConfigMgr.h"
+#include "Logger.h"
 
 #include <iostream>
 #include <jsoncpp/json/json.h>
@@ -34,7 +35,7 @@ void RunServer()
 
     // 构建并启动gRPC服务器
     std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
-    std::cout << "Server listening on " << server_address << std::endl;
+    LOG_INFO("RPC Server listening on {}", server_address);
 
     // 创建Boost.Asio的io_context
     boost::asio::io_context io_context;
@@ -47,7 +48,7 @@ void RunServer()
             const boost::system::error_code& error, int signal_number) {
             if (!error)
             {
-                std::cout << "Shutting down server..." << std::endl;
+                LOG_INFO("Received signal {}: shutting down server...", signal_number);
                 server->Shutdown();  // 优雅地关闭服务器
                 io_context.stop();   // 停止io_context
             }
@@ -68,7 +69,7 @@ int main(int argc, char** argv)
     }
     catch (std::exception const& e)
     {
-        std::cerr << "Error: " << e.what() << std::endl;
+        LOG_ERROR("Exception: {}", e.what());
         return EXIT_FAILURE;
     }
 

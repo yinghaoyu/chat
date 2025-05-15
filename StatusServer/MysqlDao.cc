@@ -1,5 +1,6 @@
 #include "MysqlDao.h"
 #include "ConfigMgr.h"
+#include "Logger.h"
 
 MysqlDao::MysqlDao()
 {
@@ -14,57 +15,13 @@ MysqlDao::MysqlDao()
 
 MysqlDao::~MysqlDao() {}
 
-int MysqlDao::RegUser(
-    const std::string& name, const std::string& email, const std::string& pwd)
+int MysqlDao::RegUser(const std::string& name, const std::string& email,
+    const std::string& pwd, const std::string& icon)
 {
     auto con = pool_->get();
     if (con == nullptr)
     {
-        std::cerr << "Failed to get connection from pool" << std::endl;
-        return -1;
-    }
-
-    try
-    {
-        // 使用存储过程注册用户
-        auto stmt = con->prepare("CALL reg_user(?, ?, ?, @result)");
-        stmt->bindString(1, name);
-        stmt->bindString(2, email);
-        stmt->bindString(3, pwd);
-
-        // 执行存储过程
-        if (stmt->execute() != 0)
-        {
-            std::cerr << "Failed to execute stored procedure for RegUser"
-                      << std::endl;
-            return -1;
-        }
-
-        // 获取存储过程的输出参数
-        auto result = con->query("SELECT @result AS result");
-        if (result && result->next())
-        {
-            int regResult = result->getInt32(0);
-            std::cout << "RegUser result: " << regResult << std::endl;
-            return regResult;
-        }
-
-        return -1;
-    }
-    catch (const std::exception& e)
-    {
-        std::cerr << "Exception in RegUser: " << e.what() << std::endl;
-        return -1;
-    }
-}
-
-int MysqlDao::RegUserTransaction(const std::string& name,
-    const std::string& email, const std::string& pwd, const std::string& icon)
-{
-    auto con = pool_->get();
-    if (con == nullptr)
-    {
-        std::cerr << "Failed to get connection from pool" << std::endl;
+        LOG_ERROR("Failed to get connection from pool");
         return -1;
     }
 
@@ -152,8 +109,7 @@ int MysqlDao::RegUserTransaction(const std::string& name,
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Exception in RegUserTransaction: " << e.what()
-                  << std::endl;
+        LOG_ERROR("Exception in RegUser: {}", e.what());
         return -1;
     }
 }
@@ -163,7 +119,7 @@ bool MysqlDao::CheckEmail(const std::string& name, const std::string& email)
     auto con = pool_->get();
     if (con == nullptr)
     {
-        std::cerr << "Failed to get connection from pool" << std::endl;
+        LOG_ERROR("Failed to get connection from pool");
         return false;
     }
 
@@ -174,14 +130,13 @@ bool MysqlDao::CheckEmail(const std::string& name, const std::string& email)
         if (result && result->next())
         {
             std::string fetchedEmail = result->getString(0);
-            std::cout << "Check Email: " << fetchedEmail << std::endl;
             return fetchedEmail == email;
         }
         return false;
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Exception in CheckEmail: " << e.what() << std::endl;
+        LOG_ERROR("Exception in CheckEmail: {}", e.what());
         return false;
     }
 }
@@ -191,31 +146,29 @@ bool MysqlDao::UpdatePwd(const std::string& name, const std::string& newpwd)
     auto con = pool_->get();
     if (con == nullptr)
     {
-        std::cerr << "Failed to get connection from pool" << std::endl;
+        LOG_ERROR("Failed to get connection from pool");
         return false;
     }
 
     try
     {
-        int affectedRows =
-            con->execStmt("UPDATE user SET pwd = ? WHERE name = ?",
-                newpwd.c_str(),
-                name.c_str());
-        if (affectedRows == 0)
+        int ret = con->execStmt("UPDATE user SET pwd = ? WHERE name = ?",
+            newpwd.c_str(),
+            name.c_str());
+        if (ret == 0)
         {
-            std::cout << "Password updated successfully for user: " << name
-                      << std::endl;
+            LOG_DEBUG("Password updated successfully for user: {}", name);
             return true;
         }
         else
         {
-            std::cerr << "No rows affected for user: " << name << std::endl;
+            LOG_ERROR("No rows affected for user: {}", name);
             return false;
         }
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Exception in UpdatePwd: " << e.what() << std::endl;
+        LOG_ERROR("Exception in UpdatePwd: ", e.what());
         return false;
     }
 }
@@ -226,13 +179,12 @@ bool MysqlDao::CheckPwd(
     auto con = pool_->get();
     if (con == nullptr)
     {
-        std::cerr << "Failed to get connection from pool" << std::endl;
+        LOG_ERROR("Failed to get connection from pool");
         return false;
     }
 
     try
     {
-        // 使用 queryStmt 执行查询
         auto result = con->queryStmt(
             "SELECT uid, name, email, pwd FROM user WHERE email = ?",
             email.c_str());
@@ -256,7 +208,7 @@ bool MysqlDao::CheckPwd(
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Exception in CheckPwd: " << e.what() << std::endl;
+        LOG_ERROR("Exception in CheckPwd: {}", e.what());
         return false;
     }
 }
