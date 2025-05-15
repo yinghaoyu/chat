@@ -65,6 +65,8 @@ static MYSQL* mysql_init(const std::string& host, int32_t port,
     {
         // 设置连接的超时时间
         mysql_options(mysql, MYSQL_OPT_CONNECT_TIMEOUT, &timeout);
+        mysql_options(mysql, MYSQL_OPT_READ_TIMEOUT, &timeout);
+        mysql_options(mysql, MYSQL_OPT_WRITE_TIMEOUT, &timeout);
     }
     // 字符集设置为 UTF-8 编码的 utf8mb4 格式
     mysql_options(mysql, MYSQL_SET_CHARSET_NAME, "utf8mb4");
@@ -86,13 +88,15 @@ static MYSQL* mysql_init(const std::string& host, int32_t port,
     return mysql;
 }
 
-MySQL::MySQL(const std::string& host, int32_t port, const std::string& user,
-    const std::string& passwd, const std::string& dbname)
+MySQL::MySQL(const std::string& host, const int32_t port,
+    const std::string& user, const std::string& passwd,
+    const std::string& dbname, const int32_t timeout)
     : m_host(host),
       m_port(port),
       m_user(user),
       m_passwd(passwd),
       m_dbname(dbname),
+      m_timeout(timeout),
       m_lastUsedTime(0),
       m_hasError(false)
 {}
@@ -104,7 +108,8 @@ bool MySQL::connect()
         return true;
     }
 
-    MYSQL* m = mysql_init(m_host, m_port, m_user, m_passwd, m_dbname, 0);
+    MYSQL* m =
+        mysql_init(m_host, m_port, m_user, m_passwd, m_dbname, m_timeout);
     if (!m)
     {
         m_hasError = true;
@@ -1066,14 +1071,15 @@ MySQLTransaction::MySQLTransaction(MySQL::ptr mysql, bool auto_commit)
       m_hasError(false)
 {}
 
-MySQLPool::MySQLPool(const std::string& host, int32_t port,
+MySQLPool::MySQLPool(const std::string& host, const int32_t port,
     const std::string& user, const std::string& passwd,
-    const std::string& dbname, int32_t poolSize)
+    const std::string& dbname, const int32_t poolSize, const int32_t timeout)
     : m_host(host),
       m_port(port),
       m_user(user),
       m_passwd(passwd),
       m_dbname(dbname),
+      m_timeout(timeout),
       m_maxConn(poolSize)
 {
     // 初始化 mysql 库
@@ -1120,12 +1126,12 @@ MySQL::ptr MySQLPool::get()
         else
         {
             std::cout << "reconnect fail";
-            delete rt;
             return nullptr;
         }
     }
     lock.unlock();
-    MySQL* rt = new MySQL(m_host, m_port, m_user, m_passwd, m_dbname);
+    MySQL* rt =
+        new MySQL(m_host, m_port, m_user, m_passwd, m_dbname, m_timeout);
     if (rt->connect())
     {
         rt->m_lastUsedTime = time(0);

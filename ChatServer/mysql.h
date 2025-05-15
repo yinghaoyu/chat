@@ -134,8 +134,9 @@ class MySQL : public IDB, public std::enable_shared_from_this<MySQL>
   public:
     typedef std::shared_ptr<MySQL> ptr;
 
-    MySQL(const std::string& host, int32_t port, const std::string& user,
-        const std::string& passwd, const std::string& dbname);
+    MySQL(const std::string& host, const int32_t port, const std::string& user,
+        const std::string& passwd, const std::string& dbname,
+        const int32_t timeout);
 
     bool connect();
     bool ping();
@@ -181,6 +182,7 @@ class MySQL : public IDB, public std::enable_shared_from_this<MySQL>
     std::string m_user;
     std::string m_passwd;
     std::string m_dbname;
+    int32_t     m_timeout;
 
     uint64_t m_lastUsedTime;
     bool     m_hasError;
@@ -283,8 +285,10 @@ class MySQLStmt : public IStmt, public std::enable_shared_from_this<MySQLStmt>
 class MySQLPool
 {
   public:
-    MySQLPool(const std::string& host, int32_t port, const std::string& user,
-        const std::string& passwd, const std::string& dbname, int32_t poolSize);
+    MySQLPool(const std::string& host, const int32_t port,
+        const std::string& user, const std::string& passwd,
+        const std::string& dbname, const int32_t poolSize,
+        const int32_t timeout);
     ~MySQLPool();
 
     MySQL::ptr get();
@@ -308,13 +312,13 @@ class MySQLPool
     void freeMySQL(MySQL* m);
 
   private:
-    std::string m_host;
-    int32_t     m_port;
-    std::string m_user;
-    std::string m_passwd;
-    std::string m_dbname;
-
-    uint32_t          m_maxConn;
+    std::string       m_host;
+    int32_t           m_port;
+    std::string       m_user;
+    std::string       m_passwd;
+    std::string       m_dbname;
+    int32_t           m_maxConn;
+    int32_t           m_timeout;
     std::mutex        m_mutex;
     std::list<MySQL*> m_conns;
 };

@@ -45,13 +45,9 @@ redisReply* RedisReplyClone(redisReply* r)
 
 Redis::Redis(const std::string& host, int32_t port, const std::string& passwd)
 {
-    m_host           = host;
-    m_port           = port;
-    m_passwd         = passwd;
-    uint64_t timeout = 1000;  // ms
-
-    m_cmdTimeout.tv_sec  = timeout / 1000;
-    m_cmdTimeout.tv_usec = timeout % 1000 * 1000;
+    m_host   = host;
+    m_port   = port;
+    m_passwd = passwd;
 }
 
 bool Redis::reconnect()
@@ -308,6 +304,7 @@ IRedis::ptr RedisPool::get()
         delete rds;
         return nullptr;
     }
+    rds->setTimeout(100);  // cmd timeout ms
     rds->setLastActiveTime(time(0));
     return std::shared_ptr<IRedis>(
         rds, std::bind(&RedisPool::freeRedis, this, std::placeholders::_1));

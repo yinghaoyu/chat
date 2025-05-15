@@ -21,7 +21,6 @@ bool RedisMgr::Get(const std::string& key, std::string& value)
     {
         return false;
     }
-    // auto reply = connect->cmd( "GET %s", key.c_str());
     auto reply = connect->cmd("GET %s", key.c_str());
     if (reply == nullptr)
     {

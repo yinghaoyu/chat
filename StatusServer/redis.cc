@@ -45,13 +45,9 @@ redisReply* RedisReplyClone(redisReply* r)
 
 Redis::Redis(const std::string& host, int32_t port, const std::string& passwd)
 {
-    m_host           = host;
-    m_port           = port;
-    m_passwd         = passwd;
-    uint64_t timeout = 1000;  // ms
-
-    m_cmdTimeout.tv_sec  = timeout / 1000;
-    m_cmdTimeout.tv_usec = timeout % 1000 * 1000;
+    m_host   = host;
+    m_port   = port;
+    m_passwd = passwd;
 }
 
 bool Redis::reconnect()
@@ -185,12 +181,14 @@ ReplyPtr Redis::cmd(const char* fmt, ...)
 ReplyPtr Redis::cmd(const char* fmt, va_list ap)
 {
     auto r = (redisReply*)redisvCommand(m_context.get(), fmt, ap);
+
     if (!r)
     {
         std::cout << "redisCommand error: (" << fmt << ")(" << m_host << ":"
                   << m_port << ")" << std::endl;
         return nullptr;
     }
+
     ReplyPtr rt(r, freeReplyObject);
     if (r->type != REDIS_REPLY_ERROR)
     {
@@ -276,7 +274,6 @@ IRedis::ptr RedisPool::get()
     std::unique_lock<std::mutex> lock(m_mutex);
 
     IRedis* r = nullptr;
-
     if (!m_conns.empty())
     {
         r = m_conns.front();
@@ -307,6 +304,7 @@ IRedis::ptr RedisPool::get()
         delete rds;
         return nullptr;
     }
+    rds->setTimeout(100);  // cmd timeout ms
     rds->setLastActiveTime(time(0));
     return std::shared_ptr<IRedis>(
         rds, std::bind(&RedisPool::freeRedis, this, std::placeholders::_1));
