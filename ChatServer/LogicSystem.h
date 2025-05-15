@@ -23,7 +23,7 @@ class LogicSystem : public Singleton<LogicSystem>
     friend class Singleton<LogicSystem>;
 
   public:
-    ~LogicSystem();
+    void Shutdown();
     void PostMsgToQue(shared_ptr<LogicNode> msg);
     void SetServer(std::shared_ptr<CServer> pserver);
 

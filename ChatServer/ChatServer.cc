@@ -68,6 +68,7 @@ int main()
                 io_context.stop();
                 pool->Stop();
                 server->Shutdown();
+                LogicSystem::GetInstance()->Shutdown();
             });
 
         // 将Cserver注册给逻辑类方便以后清除连接

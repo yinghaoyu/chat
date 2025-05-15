@@ -19,7 +19,7 @@ LogicSystem::LogicSystem() : _b_stop(false), _p_server(nullptr)
     _worker_thread = std::thread(&LogicSystem::DealMsg, this);
 }
 
-LogicSystem::~LogicSystem()
+void LogicSystem::Shutdown()
 {
     _b_stop = true;
     _consume.notify_one();
