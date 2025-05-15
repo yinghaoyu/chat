@@ -2,11 +2,11 @@
 
 root_path=$(dirname $(readlink -f $0))
 
-cd ChatServer && ./generate_message_grpc.sh
+cd Server/ChatServer && ./generate_message_grpc.sh
 cd $root_path
-cd GateServer && ./generate_message_grpc.sh
+cd Server/GateServer && ./generate_message_grpc.sh
 cd $root_path
-cd StatusServer && ./generate_message_grpc.sh
+cd Server/StatusServer && ./generate_message_grpc.sh
 
 cd $root_path
 
@@ -22,14 +22,14 @@ mkdir -p bin/ChatServer2
 mkdir -p bin/GateServer
 mkdir -p bin/StatusServer
 
-cp -f build/StatusServer/StatusServer bin/StatusServer/StatusServer
-cp -f StatusServer/config.ini bin/StatusServer/config.ini
+cp -f build/Server/StatusServer/StatusServer bin/StatusServer/StatusServer
+cp -f Server/StatusServer/config.ini bin/StatusServer/config.ini
 
-cp -f build/GateServer/GateServer bin/GateServer/GateServer
-cp -f GateServer/config.ini bin/GateServer/config.ini
+cp -f build/Server/GateServer/GateServer bin/GateServer/GateServer
+cp -f Server/GateServer/config.ini bin/GateServer/config.ini
 
-cp -f build/ChatServer/ChatServer bin/ChatServer/ChatServer
-cp -f ChatServer/config.ini bin/ChatServer/config.ini
+cp -f build/Server/ChatServer/ChatServer bin/ChatServer/ChatServer
+cp -f Server/ChatServer/config.ini bin/ChatServer/config.ini
 
-cp -f build/ChatServer/ChatServer bin/ChatServer2/ChatServer
-cp -f ChatServer/config2.ini bin/ChatServer2/config.ini
+cp -f build/Server/ChatServer/ChatServer bin/ChatServer2/ChatServer
+cp -f Server/ChatServer/config2.ini bin/ChatServer2/config.ini

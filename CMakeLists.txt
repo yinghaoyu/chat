@@ -73,6 +73,10 @@ else()
     message(FATAL_ERROR "gRPC not found")
 endif()
 
-add_subdirectory(ChatServer)
-add_subdirectory(GateServer)
-add_subdirectory(StatusServer)
+include_directories(${PROJECT_SOURCE_DIR})
+include_directories(Server/Common)
+
+add_subdirectory(Server/Common)
+add_subdirectory(Server/ChatServer)
+add_subdirectory(Server/GateServer)
+add_subdirectory(Server/StatusServer)
