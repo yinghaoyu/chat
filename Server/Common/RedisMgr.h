@@ -1,6 +1,5 @@
 #pragma once
 
-#include "const.h"
 #include "Singleton.h"
 #include "redis.h"
 

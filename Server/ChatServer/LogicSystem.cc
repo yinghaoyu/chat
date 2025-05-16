@@ -1,13 +1,12 @@
 #include "LogicSystem.h"
-#include "StatusGrpcClient.h"
 #include "MysqlMgr.h"
 #include "const.h"
 #include "RedisMgr.h"
 #include "UserMgr.h"
 #include "ChatGrpcClient.h"
-#include "DistLock.h"
 #include "CServer.h"
 #include "Logger.h"
+#include "ConfigMgr.h"
 
 #include <string>
 
@@ -38,13 +37,11 @@ void LogicSystem::Shutdown()
 void LogicSystem::PostMsgToQue(shared_ptr<LogicNode> msg)
 {
     std::unique_lock<std::mutex> lock(_mutex);
-    _msg_que.push_back(msg);
-    // 由0变为1则发送通知信号
-    // if (_msg_que.size() == 1)
-    // {
-    //     unique_lk.unlock();
-    //     _consume.notify_one();
-    // }
+    if (_b_stop)
+    {
+        return;
+    }
+    _msg_que.emplace_back(msg);
     _consume.notify_one();
 }
 
@@ -141,7 +138,7 @@ void LogicSystem::LoginHandler(
     reader.parse(msg_data, root);
     auto uid   = root["uid"].asInt();
     auto token = root["token"].asString();
-    LOG_INFO("user login uid: {}, token: {}", uid, token);
+    LOG_INFO("LoginHandler use login in, uid: {}, token: {}", uid, token);
 
     Json::Value rtvalue;
     Defer       defer([this, &rtvalue, session]() {
@@ -156,14 +153,14 @@ void LogicSystem::LoginHandler(
     bool        success = RedisMgr::GetInstance()->Get(token_key, token_value);
     if (!success)
     {
-        LOG_INFO("user login token not exist, uid: {}", uid);
+        LOG_INFO("LoginHandler user token not exist, uid: {}", uid);
         rtvalue["error"] = ErrorCodes::UidInvalid;
         return;
     }
 
     if (token_value != token)
     {
-        LOG_INFO("user login token not match, uid: {}, token: {}, real token: {}", uid, token, token_value);
+        LOG_INFO("LoginHandler user token not match, uid: {}, token: {}, real token: {}", uid, token, token_value);
         rtvalue["error"] = ErrorCodes::TokenInvalid;
         return;
     }
@@ -175,6 +172,7 @@ void LogicSystem::LoginHandler(
     bool        b_base    = GetBaseInfo(base_key, uid, user_info);
     if (!b_base)
     {
+        LOG_INFO("LoginHandler user not exists, uid: {}, token: {}", uid, token);
         rtvalue["error"] = ErrorCodes::UidInvalid;
         return;
     }
@@ -243,27 +241,30 @@ void LogicSystem::LoginHandler(
         // 说明用户已经登录了，此处应该踢掉之前的用户登录状态
         if (b_ip)
         {
+            LOG_INFO("LoginHandler user already login, uid: {}, ip: {}", uid, uid_ip_value);
             // 获取当前服务器ip信息
             auto& cfg       = ConfigMgr::Inst();
             auto  self_name = cfg["SelfServer"]["Name"];
             // 如果之前登录的服务器和当前相同，则直接在本服务器踢掉
             if (uid_ip_value == self_name)
             {
+                LOG_INFO("LoginHandler user already login in same server, uid: {}, lastip: {}", uid_ip_value);
                 // 查找旧有的连接
                 auto old_session = UserMgr::GetInstance()->GetSession(uid);
 
                 // 此处应该发送踢人消息
                 if (old_session)
                 {
+                    LOG_INFO("LoginHandler user already login in same server, uid: {}, old_session: {}", uid, old_session->GetSessionId());
                     old_session->NotifyOffline(uid);
                     // 清除旧的连接
-                    _p_server->ClearSession(old_session->GetSessionId());
+                    _p_server->CleanSession(old_session->GetSessionId());
                 }
             }
             else
             {
                 // 如果不是本服务器，则通知grpc通知其他服务器踢掉
-                // 发送通知
+                LOG_INFO("LoginHandler user already login in other server, uid: {}, lastip: {}", uid, uid_ip_value);
                 KickUserReq kick_req;
                 kick_req.set_uid(uid);
                 ChatGrpcClient::GetInstance()->NotifyKickUser(
@@ -537,13 +538,13 @@ void LogicSystem::DealChatTextMsg(std::shared_ptr<CSession> session,
     // 直接通知对方有认证通过消息
     if (to_ip_value == self_name)
     {
-        auto session = UserMgr::GetInstance()->GetSession(touid);
-        if (session)
+        auto peer = UserMgr::GetInstance()->GetSession(touid);
+        if (peer)
         {
-            LOG_INFO("user send msg, touid at same chat server, fromuid: {}, touid: {}", uid, touid);
+            LOG_INFO("user send msg, touid at same chat server, fromuid: {}, touid: {}, session: {}, peer: {}", uid, touid, session->GetSessionId(), peer->GetSessionId());
             // 在内存中则直接发送通知对方
             std::string msg = rtvalue.toStyledString();
-            session->Send(msg, ID_NOTIFY_TEXT_CHAT_MSG_REQ);
+            peer->Send(msg, ID_NOTIFY_TEXT_CHAT_MSG_REQ);
         }
 
         return;

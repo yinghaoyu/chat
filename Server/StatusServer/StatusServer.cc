@@ -1,20 +1,11 @@
-﻿// StatusServer.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
-//
-
-#include "StatusServiceImpl.h"
-#include "RedisMgr.h"
-#include "MysqlMgr.h"
-#include "AsioIOServicePool.h"
-#include "const.h"
+﻿#include "StatusServiceImpl.h"
 #include "ConfigMgr.h"
 #include "Logger.h"
 
-#include <iostream>
 #include <jsoncpp/json/json.h>
 #include <jsoncpp/json/value.h>
 #include <jsoncpp/json/reader.h>
 #include <hiredis/hiredis.h>
-#include <iostream>
 #include <memory>
 #include <string>
 #include <thread>

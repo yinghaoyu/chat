@@ -1,4 +1,6 @@
 #include "MsgNode.h"
+#include <const.h>
+
 RecvNode::RecvNode(short max_len, short msg_id)
     : MsgNode(max_len), _msg_id(msg_id)
 {}

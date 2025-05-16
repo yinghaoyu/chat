@@ -12,15 +12,16 @@ class UserMgr : public Singleton<UserMgr>
 
   public:
     ~UserMgr();
+
     std::shared_ptr<CSession> GetSession(int uid);
 
     void SetUserSession(int uid, std::shared_ptr<CSession> session);
     void RmvUserSession(int uid, std::string session_id);
 
   private:
-    UserMgr();
+    UserMgr() {}
 
-    std::mutex _session_mtx;
+    std::mutex mutex_;
 
-    std::unordered_map<int, std::shared_ptr<CSession>> _uid_to_session;
+    std::unordered_map<int, std::shared_ptr<CSession>> sessions_;
 };

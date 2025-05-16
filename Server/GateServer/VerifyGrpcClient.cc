@@ -1,5 +1,5 @@
 #include "VerifyGrpcClient.h"
-#include "const.h"
+#include "ConfigMgr.h"
 
 VerifyGrpcClient::VerifyGrpcClient()
 {

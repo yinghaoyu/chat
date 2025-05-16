@@ -1,12 +1,8 @@
-﻿#include "AsioIOServicePool.h"
-#include "CServer.h"
+﻿#include "CServer.h"
 #include "ConfigMgr.h"
 #include "MysqlMgr.h"
 #include "RedisMgr.h"
-#include "const.h"
 #include "Logger.h"
-
-#include <iostream>
 
 int main()
 {

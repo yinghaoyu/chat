@@ -1,13 +1,8 @@
 #pragma once
 #include "data.h"
 #include "mysql.h"
-#include "const.h"
 
-#include <thread>
 #include <memory>
-#include <queue>
-#include <mutex>
-#include <chrono>
 
 class MysqlDao
 {

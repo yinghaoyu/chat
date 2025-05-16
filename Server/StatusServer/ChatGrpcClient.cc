@@ -1,5 +1,6 @@
 #include "ChatGrpcClient.h"
-#include "RedisMgr.h"
+
+#include "ConfigMgr.h"
 
 ChatGrpcClient::ChatGrpcClient()
 {

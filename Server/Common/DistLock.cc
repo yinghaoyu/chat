@@ -1,7 +1,6 @@
 #include "DistLock.h"
 
 #include <thread>
-#include <iostream>
 #include <string>
 #include <chrono>
 #include <thread>

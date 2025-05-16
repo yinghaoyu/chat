@@ -1,9 +1,8 @@
 #include "ChatGrpcClient.h"
 #include "RedisMgr.h"
 #include "ConfigMgr.h"
-#include "UserMgr.h"
-#include "CSession.h"
 #include "MysqlMgr.h"
+#include "const.h"
 #include "Logger.h"
 
 ChatGrpcClient::ChatGrpcClient()

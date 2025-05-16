@@ -3,11 +3,9 @@
 #include "message.grpc.pb.h"
 #include "const.h"
 #include "Singleton.h"
-#include "ConfigMgr.h"
 
 #include <queue>
 #include <string>
-#include <iostream>
 #include <memory>
 #include <condition_variable>
 #include <grpcpp/grpcpp.h>

@@ -216,7 +216,7 @@ Status ChatServiceImpl::NotifyKickUser(::grpc::ServerContext* context,
     session->NotifyOffline(uid);
     LOG_INFO("NotifyTextChatMsg session send finish, uid: {}", uid);
     // 清除旧的连接
-    _p_server->ClearSession(session->GetSessionId());
+    _p_server->CleanSession(session->GetSessionId());
 
     return Status::OK;
 }

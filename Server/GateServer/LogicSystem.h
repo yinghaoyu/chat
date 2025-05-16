@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Singleton.h"
-#include "const.h"
 
 #include <functional>
 #include <map>

@@ -23,13 +23,17 @@ class CSession : public std::enable_shared_from_this<CSession>
   public:
     CSession(boost::asio::io_context& io_context, CServer* server);
     ~CSession();
-    tcp::socket& GetSocket();
-    std::string& GetSessionId();
-    void         SetUserId(int uid);
-    int          GetUserId();
-    void         Start();
+
+    tcp::socket&       GetSocket();
+    const std::string& GetSessionId();
+
+    void SetUserId(int uid);
+    int  GetUserId();
+    void Start();
+
     void Send(const char* msg, const short max_length, const short msgid);
     void Send(const std::string& msg, const short msgid);
+    void ShutDownWrite();
     void Close();
 
     std::shared_ptr<CSession> SharedSelf();
@@ -60,7 +64,7 @@ class CSession : public std::enable_shared_from_this<CSession>
     std::string _session_id;
     char        _data[MAX_LENGTH];
     CServer*    _server;
-    bool        _b_close;
+    bool        _closed;
 
     std::queue<shared_ptr<SendNode> > _send_que;
 

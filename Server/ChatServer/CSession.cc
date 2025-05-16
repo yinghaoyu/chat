@@ -11,7 +11,7 @@
 CSession::CSession(boost::asio::io_context& io_context, CServer* server)
     : _socket(io_context),
       _server(server),
-      _b_close(false),
+      _closed(false),
       _b_head_parse(false),
       _user_uid(0)
 {
@@ -24,7 +24,7 @@ CSession::~CSession() { LOG_TRACE("CSession dtor~"); }
 
 tcp::socket& CSession::GetSocket() { return _socket; }
 
-std::string& CSession::GetSessionId() { return _session_id; }
+const std::string& CSession::GetSessionId() { return _session_id; }
 
 void CSession::SetUserId(int uid) { _user_uid = uid; }
 
@@ -61,11 +61,20 @@ void CSession::Send(const char* msg, const short max_length, const short msgid)
             &CSession::HandleWrite, this, std::placeholders::_1, SharedSelf()));
 }
 
+void CSession::ShutDownWrite() { _socket.shutdown(tcp::socket::shutdown_send); }
+
 void CSession::Close()
 {
     std::lock_guard<std::mutex> _(_session_mtx);
+
+    if (_closed)
+    {
+        return;
+    }
+
     _socket.close();
-    _b_close = true;
+
+    _closed = true;
 }
 
 std::shared_ptr<CSession> CSession::SharedSelf() { return shared_from_this(); }
@@ -90,20 +99,20 @@ void CSession::AsyncReadBody(int total_len)
 
                 if (bytes_transfered < total_len)
                 {
-                    LOG_INFO("session: {} read length not match, read: {} , total: {}",
+                    LOG_ERROR("session: {} read length not match, read: {} , total: {}",
                         _session_id,
                         bytes_transfered,
                         total_len);
 
                     Close();
-                    _server->ClearSession(_session_id);
+                    _server->CleanSession(_session_id);
                     return;
                 }
 
                 // 判断连接无效
                 if (!_server->CheckValid(_session_id))
                 {
-                    Close();
+                    ShutDownWrite();
                     return;
                 }
 
@@ -148,12 +157,12 @@ void CSession::AsyncReadHead(int total_len)
 
                 if (bytes_transfered < HEAD_TOTAL_LEN)
                 {
-                    LOG_INFO("session: {} read length not match, read: {} , total: {}",
+                    LOG_ERROR("session: {} read length not match, read: {} , total: {}",
                         _session_id,
                         bytes_transfered,
                         HEAD_TOTAL_LEN);
                     Close();
-                    _server->ClearSession(_session_id);
+                    _server->CleanSession(_session_id);
                     return;
                 }
 
@@ -161,7 +170,7 @@ void CSession::AsyncReadHead(int total_len)
                 if (!_server->CheckValid(_session_id))
                 {
                     LOG_ERROR("session: {} check valid failed", _session_id);
-                    Close();
+                    ShutDownWrite();
                     return;
                 }
 
@@ -179,7 +188,7 @@ void CSession::AsyncReadHead(int total_len)
                 if (msg_id > MAX_LENGTH)
                 {
                     LOG_ERROR("session: {} msg_id invalid, msg_id: {}", _session_id, msg_id);
-                    _server->ClearSession(_session_id);
+                    _server->CleanSession(_session_id);
                     return;
                 }
                 short msg_len = 0;
@@ -197,7 +206,7 @@ void CSession::AsyncReadHead(int total_len)
                 if (msg_len > MAX_LENGTH)
                 {
                     LOG_ERROR("session: {} msg_id length, length: {}", _session_id, msg_len);
-                    _server->ClearSession(_session_id);
+                    _server->CleanSession(_session_id);
                     return;
                 }
 
@@ -339,7 +348,7 @@ void CSession::DealExceptionSession()
     LOG_INFO("Redis get user lock finish, session: {}, key: {}", _session_id, lock_key);
 
     Defer defer([identifier, lock_key, self, this]() {
-        _server->ClearSession(_session_id);
+        _server->CleanSession(_session_id);
         RedisMgr::GetInstance()->releaseLock(lock_key, identifier);
     });
 

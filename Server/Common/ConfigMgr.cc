@@ -1,5 +1,7 @@
 #include "ConfigMgr.h"
 
+#include <iostream>
+
 ConfigMgr::ConfigMgr()
 {
     // 获取当前工作目录

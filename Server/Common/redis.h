@@ -8,7 +8,6 @@
 #include <list>
 #include <vector>
 #include <mutex>
-#include <map>
 
 typedef std::shared_ptr<redisReply> ReplyPtr;
 

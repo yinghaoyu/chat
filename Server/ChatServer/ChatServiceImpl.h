@@ -7,7 +7,6 @@
 
 #include <grpcpp/grpcpp.h>
 #include <memory>
-#include <mutex>
 
 using grpc::Server;
 using grpc::ServerBuilder;

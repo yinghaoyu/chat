@@ -1,13 +1,11 @@
 #pragma once
 #include "Singleton.h"
 #include "CSession.h"
-#include "const.h"
 #include "data.h"
 
 #include <jsoncpp/json/json.h>
 #include <jsoncpp/json/value.h>
 #include <jsoncpp/json/reader.h>
-#include <unordered_map>
 #include <vector>
 #include <map>
 #include <functional>
