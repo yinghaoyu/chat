@@ -16,20 +16,29 @@ using namespace std;
 LogicSystem::LogicSystem() : _b_stop(false), _p_server(nullptr)
 {
     RegisterCallBacks();
-    _worker_thread = std::thread(&LogicSystem::DealMsg, this);
+    for (int i = 0; i < 4; ++i)
+    {
+        _worker_threads.emplace_back(&LogicSystem::DealMsg, this);
+    }
 }
 
 void LogicSystem::Shutdown()
 {
     _b_stop = true;
-    _consume.notify_one();
-    _worker_thread.join();
+    _consume.notify_all();
+    for (auto& t : _worker_threads)
+    {
+        if (t.joinable())
+        {
+            t.join();
+        }
+    }
 }
 
 void LogicSystem::PostMsgToQue(shared_ptr<LogicNode> msg)
 {
-    std::unique_lock<std::mutex> unique_lk(_mutex);
-    _msg_que.push(msg);
+    std::unique_lock<std::mutex> lock(_mutex);
+    _msg_que.push_back(msg);
     // 由0变为1则发送通知信号
     // if (_msg_que.size() == 1)
     // {
@@ -48,53 +57,37 @@ void LogicSystem::DealMsg()
 {
     for (;;)
     {
-        std::unique_lock<std::mutex> unique_lk(_mutex);
-        // 判断队列为空则用条件变量阻塞等待，并释放锁
-        while (_msg_que.empty() && !_b_stop)
-        {
-            _consume.wait(unique_lk);
-        }
+        std::vector<std::shared_ptr<LogicNode>> msgs;
 
-        // 判断是否为关闭状态，把所有逻辑执行完后则退出循环
-        if (_b_stop)
         {
-            while (!_msg_que.empty())
+            std::unique_lock<std::mutex> lock(_mutex);
+
+            _consume.wait(
+                lock, [this] { return !_msg_que.empty() || _b_stop; });
+
+            if (_b_stop && _msg_que.empty())
             {
-                auto msg_node = _msg_que.front();
-                LOG_INFO("recv msg id:{}", msg_node->_recvnode->_msg_id);
-                auto call_back_iter =
-                    _fun_callbacks.find(msg_node->_recvnode->_msg_id);
-                if (call_back_iter == _fun_callbacks.end())
-                {
-                    _msg_que.pop();
-                    continue;
-                }
-                call_back_iter->second(msg_node->_session,
-                    msg_node->_recvnode->_msg_id,
-                    std::string(msg_node->_recvnode->_data,
-                        msg_node->_recvnode->_cur_len));
-                _msg_que.pop();
+                break;
             }
-            break;
+
+            std::swap(msgs, _msg_que);
         }
 
-        // 如果没有停服，且说明队列中有数据
-        auto msg_node = _msg_que.front();
-        LOG_INFO("recv msg id:{}", msg_node->_recvnode->_msg_id);
-        auto call_back_iter = _fun_callbacks.find(msg_node->_recvnode->_msg_id);
-        if (call_back_iter == _fun_callbacks.end())
+        for (auto& msg_node : msgs)
         {
-            _msg_que.pop();
-
-            LOG_ERROR("msg handler not found, msg id:{}", msg_node->_recvnode->_msg_id);
-
-            continue;
+            LOG_INFO("handle msg, id:{}", msg_node->_recvnode->_msg_id);
+            auto call_back_iter =
+                _fun_callbacks.find(msg_node->_recvnode->_msg_id);
+            if (call_back_iter == _fun_callbacks.end())
+            {
+                LOG_ERROR("handle msg, handler not found, msg id:{}", msg_node->_recvnode->_msg_id);
+                continue;
+            }
+            call_back_iter->second(msg_node->_session,
+                msg_node->_recvnode->_msg_id,
+                std::string(
+                    msg_node->_recvnode->_data, msg_node->_recvnode->_cur_len));
         }
-        call_back_iter->second(msg_node->_session,
-            msg_node->_recvnode->_msg_id,
-            std::string(
-                msg_node->_recvnode->_data, msg_node->_recvnode->_cur_len));
-        _msg_que.pop();
     }
 }
 
@@ -196,7 +189,9 @@ void LogicSystem::LoginHandler(
 
     // 从数据库获取申请列表
     std::vector<std::shared_ptr<ApplyInfo>> apply_list;
+
     auto b_apply = GetFriendApplyInfo(uid, apply_list);
+
     if (b_apply)
     {
         for (auto& apply : apply_list)

@@ -27,10 +27,9 @@ Status ChatServiceImpl::NotifyAddFriend(
     // 用户不在内存中则直接返回
     if (session == nullptr)
     {
-        LOG_ERROR("NotifyAddFriend user not in memory, uid: {}", touid);
+        LOG_ERROR("NotifyAddFriend touid not in memory, fromuid: {}, touid: {}", request->applyuid(), touid);
         return Status::OK;
     }
-    LOG_INFO("NotifyAddFriend user in memory, uid: {}", touid);
     // 在内存中则直接发送通知对方
     Json::Value rtvalue;
     rtvalue["error"]    = ErrorCodes::Success;
@@ -42,8 +41,9 @@ Status ChatServiceImpl::NotifyAddFriend(
     rtvalue["nick"]     = request->nick();
 
     std::string return_str = rtvalue.toStyledString();
-
+    LOG_INFO("NotifyAddFriend session send begin, fromuid: {}, touid: {}", request->applyuid(), touid);
     session->Send(return_str, ID_NOTIFY_ADD_FRIEND_REQ);
+    LOG_INFO("NotifyAddFriend session send finish, fromuid: {}, touid: {}", request->applyuid(), touid);
     return Status::OK;
 }
 
@@ -64,10 +64,9 @@ Status ChatServiceImpl::NotifyAuthFriend(
     // 用户不在内存中则直接返回
     if (session == nullptr)
     {
-        LOG_ERROR("NotifyAuthFriend user not in memory, uid: {}", touid);
+        LOG_ERROR("NotifyAuthFriend touid not in memory, fromuid: {}, touid: {}", request->fromuid(), touid);
         return Status::OK;
     }
-
     // 在内存中则直接发送通知对方
     Json::Value rtvalue;
     rtvalue["error"]   = ErrorCodes::Success;
@@ -90,8 +89,9 @@ Status ChatServiceImpl::NotifyAuthFriend(
     }
 
     std::string return_str = rtvalue.toStyledString();
-
+    LOG_INFO("NotifyAuthFriend session send begin, fromuid: {}, touid: {}", request->fromuid(), touid);
     session->Send(return_str, ID_NOTIFY_AUTH_FRIEND_REQ);
+    LOG_INFO("NotifyAuthFriend session send finish, fromuid: {}, touid: {}", request->fromuid(), touid);
     return Status::OK;
 }
 
@@ -106,6 +106,7 @@ Status ChatServiceImpl::NotifyTextChatMsg(::grpc::ServerContext* context,
     // 用户不在内存中则直接返回
     if (session == nullptr)
     {
+        LOG_ERROR("NotifyTextChatMsg touid not in memory, fromuid: {}, touid: {}", request->fromuid(), touid);
         return Status::OK;
     }
 
@@ -127,8 +128,9 @@ Status ChatServiceImpl::NotifyTextChatMsg(::grpc::ServerContext* context,
     rtvalue["text_array"] = text_array;
 
     std::string return_str = rtvalue.toStyledString();
-
+    LOG_INFO("NotifyTextChatMsg session send begin, fromuid: {}, touid: {}", request->fromuid(), touid);
     session->Send(return_str, ID_NOTIFY_TEXT_CHAT_MSG_REQ);
+    LOG_INFO("NotifyTextChatMsg session send finsh, fromuid: {}, touid: {}", request->fromuid(), touid);
     return Status::OK;
 }
 
@@ -158,8 +160,6 @@ bool ChatServiceImpl::GetBaseInfo(
     }
     else
     {
-        LOG_INFO("Redis get user info failed, key: {}", base_key);
-        LOG_INFO("Mysql get user info, uid: {}", uid);
         // redis中没有则查询mysql
         // 查询数据库
         std::shared_ptr<UserInfo> user_info = nullptr;
@@ -170,7 +170,7 @@ bool ChatServiceImpl::GetBaseInfo(
             return false;
         }
 
-        LOG_INFO("Mysql get user info success, uid: {}, name: {}, pwd: {}, "
+        LOG_INFO("Mysql get user info, uid: {}, name: {}, pwd: {}, "
                  "email: {}, nick: {}, desc: {}, sex: {}, icon: {}",
             uid, user_info->name, user_info->pwd, user_info->email,
             user_info->nick, user_info->desc, user_info->sex,user_info->icon);
@@ -211,9 +211,10 @@ Status ChatServiceImpl::NotifyKickUser(::grpc::ServerContext* context,
         LOG_ERROR("NotifyKickUser user not in memory, uid: {}", uid);
         return Status::OK;
     }
-    LOG_INFO("NotifyKickUser user in memory, uid: {}", uid);
+    LOG_INFO("NotifyTextChatMsg session send begin, uid: {}", uid);
     // 在内存中则直接发送通知对方
     session->NotifyOffline(uid);
+    LOG_INFO("NotifyTextChatMsg session send finish, uid: {}", uid);
     // 清除旧的连接
     _p_server->ClearSession(session->GetSessionId());
 

@@ -2,11 +2,8 @@
 #include "CServer.h"
 #include "LogicSystem.h"
 #include "RedisMgr.h"
-#include "ConfigMgr.h"
 #include "Logger.h"
 
-#include <iostream>
-#include <sstream>
 #include <jsoncpp/json/json.h>
 #include <jsoncpp/json/value.h>
 #include <jsoncpp/json/reader.h>
@@ -23,7 +20,7 @@ CSession::CSession(boost::asio::io_context& io_context, CServer* server)
     _recv_head_node           = make_shared<MsgNode>(HEAD_TOTAL_LEN);
     _last_heartbeat           = std::time(nullptr);
 }
-CSession::~CSession() { std::cout << "CSession dtor~" << endl; }
+CSession::~CSession() { LOG_TRACE("CSession dtor~"); }
 
 tcp::socket& CSession::GetSocket() { return _socket; }
 
@@ -42,8 +39,9 @@ void CSession::Send(const std::string& msg, const short msgid)
 
 void CSession::Send(const char* msg, const short max_length, const short msgid)
 {
-    std::lock_guard<std::mutex> lock(_send_lock);
-    int                         send_que_size = _send_que.size();
+    std::lock_guard<std::mutex> _(_send_lock);
+
+    int send_que_size = _send_que.size();
     if (send_que_size > MAX_SENDQUE)
     {
         LOG_ERROR("session: {} send que fulled, size: {}", _session_id,
@@ -65,7 +63,7 @@ void CSession::Send(const char* msg, const short max_length, const short msgid)
 
 void CSession::Close()
 {
-    std::lock_guard<std::mutex> lock(_session_mtx);
+    std::lock_guard<std::mutex> _(_session_mtx);
     _socket.close();
     _b_close = true;
 }
@@ -218,7 +216,6 @@ void CSession::AsyncReadHead(int total_len)
 void CSession::HandleWrite(const boost::system::error_code& error,
     std::shared_ptr<CSession>                               shared_self)
 {
-    // 增加异常处理
     try
     {
         if (error)

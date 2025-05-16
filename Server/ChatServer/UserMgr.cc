@@ -1,6 +1,7 @@
 #include "UserMgr.h"
 #include "CSession.h"
 #include "RedisMgr.h"
+#include "Logger.h"
 
 UserMgr::~UserMgr() { _uid_to_session.clear(); }
 
@@ -36,9 +37,11 @@ void UserMgr::RmvUserSession(int uid, std::string session_id)
         // 不相等说明是其他地方登录了
         if (session_id_ != session_id)
         {
+            LOG_ERROR("session removed failure, uid: {}, old_session: {}, new_session: {}", uid, session_id, session_id_);
             return;
         }
         _uid_to_session.erase(uid);
+        LOG_INFO("session removed, uid: {}, session : {}", uid, session_id);
     }
 }
 

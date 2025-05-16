@@ -8,10 +8,9 @@
 #include <jsoncpp/json/value.h>
 #include <jsoncpp/json/reader.h>
 #include <unordered_map>
-#include <queue>
+#include <vector>
 #include <map>
 #include <functional>
-#include <queue>
 #include <thread>
 
 class CServer;
@@ -52,11 +51,11 @@ class LogicSystem : public Singleton<LogicSystem>
         int to_uid, std::vector<std::shared_ptr<ApplyInfo>>& list);
     bool GetFriendList(
         int self_id, std::vector<std::shared_ptr<UserInfo>>& user_list);
-    std::thread                       _worker_thread;
-    std::queue<shared_ptr<LogicNode>> _msg_que;
-    std::mutex                        _mutex;
-    std::condition_variable           _consume;
-    bool                              _b_stop;
-    std::map<short, FunCallBack>      _fun_callbacks;
-    std::shared_ptr<CServer>          _p_server;
+    std::vector<std::thread>           _worker_threads;
+    std::vector<shared_ptr<LogicNode>> _msg_que;
+    std::mutex                         _mutex;
+    std::condition_variable            _consume;
+    bool                               _b_stop;
+    std::map<short, FunCallBack>       _fun_callbacks;
+    std::shared_ptr<CServer>           _p_server;
 };

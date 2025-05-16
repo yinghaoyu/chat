@@ -13,12 +13,7 @@
 #include <mutex>
 #include <memory>
 
-using namespace std;
-
-namespace beast = boost::beast;          // from <boost/beast.hpp>
-namespace http  = beast::http;           // from <boost/beast/http.hpp>
-namespace net   = boost::asio;           // from <boost/asio.hpp>
-using tcp       = boost::asio::ip::tcp;  // from <boost/asio/ip/tcp.hpp>
+using tcp = boost::asio::ip::tcp;  // from <boost/asio/ip/tcp.hpp>
 
 class CServer;
 class LogicSystem;
@@ -36,12 +31,16 @@ class CSession : public std::enable_shared_from_this<CSession>
     void Send(const char* msg, const short max_length, const short msgid);
     void Send(const std::string& msg, const short msgid);
     void Close();
+
     std::shared_ptr<CSession> SharedSelf();
-    void                      AsyncReadBody(int length);
-    void                      AsyncReadHead(int total_len);
-    void                      NotifyOffline(int uid);
+
+    void AsyncReadBody(int length);
+    void AsyncReadHead(int total_len);
+    void NotifyOffline(int uid);
+
     // 判断心跳是否过期
     bool IsHeartbeatExpired(std::time_t& now);
+
     // 更新心跳
     void UpdateHeartbeat();
     // 处理异常连接
@@ -54,16 +53,18 @@ class CSession : public std::enable_shared_from_this<CSession>
     void asyncReadLen(std::size_t read_len, std::size_t total_len,
         std::function<void(const boost::system::error_code&, std::size_t)>
             handler);
+    void HandleWrite(
+        const boost::system::error_code&, std::shared_ptr<CSession>);
 
-    void        HandleWrite(const boost::system::error_code& error,
-               std::shared_ptr<CSession>                     shared_self);
     tcp::socket _socket;
     std::string _session_id;
     char        _data[MAX_LENGTH];
     CServer*    _server;
     bool        _b_close;
+
     std::queue<shared_ptr<SendNode> > _send_que;
-    std::mutex                        _send_lock;
+
+    std::mutex _send_lock;
     // 收到的消息结构
     std::shared_ptr<RecvNode> _recv_msg_node;
     bool                      _b_head_parse;
