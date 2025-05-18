@@ -120,7 +120,7 @@ public:
         ChatUserWid->setWindowTitle(QCoreApplication::translate("ChatUserWid", "Form", nullptr));
         icon_lb->setText(QString());
         red_point->setText(QString());
-        user_name_lb->setText(QCoreApplication::translate("ChatUserWid", "llfc", nullptr));
+        user_name_lb->setText(QCoreApplication::translate("ChatUserWid", "Anyone", nullptr));
         user_chat_lb->setText(QCoreApplication::translate("ChatUserWid", "Hello World!", nullptr));
         time_lb->setText(QCoreApplication::translate("ChatUserWid", "13:54", nullptr));
     } // retranslateUi

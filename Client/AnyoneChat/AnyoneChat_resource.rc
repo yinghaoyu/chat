@@ -1,6 +1,6 @@
 #include <windows.h>
 
-IDI_ICON1	ICON	DISCARDABLE	"D:\\src\\chat\\Client\\llfcchat\\icon.ico"
+IDI_ICON1	ICON	DISCARDABLE	"D:\\src\\AnyoneChat\\Client\\AnyoneChat\\icon.ico"
 
 VS_VERSION_INFO VERSIONINFO
 	FILEVERSION 0,0,0,0
@@ -23,8 +23,8 @@ VS_VERSION_INFO VERSIONINFO
 				VALUE "FileDescription", "\0"
 				VALUE "FileVersion", "0.0.0.0\0"
 				VALUE "LegalCopyright", "\0"
-				VALUE "OriginalFilename", "llfcchat.exe\0"
-				VALUE "ProductName", "llfcchat\0"
+				VALUE "OriginalFilename", "AnyoneChat.exe\0"
+				VALUE "ProductName", "AnyoneChat\0"
 				VALUE "ProductVersion", "0.0.0.0\0"
 			END
 		END

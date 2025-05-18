@@ -8,7 +8,7 @@ QT       += core gui network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = llfcchat
+TARGET = AnyoneChat
 TEMPLATE = app
 RC_ICONS = icon.ico
 DESTDIR = ./bin
@@ -241,7 +241,7 @@ CONFIG(debug, debug|release) {
     #将输出目录中的"/"替换为"\"
     OutputDir =  $${OUT_PWD}/$${DESTDIR}
     OutputDir = $$replace(OutputDir, /, \\)
-    //执行copy命令
+    # 执行copy命令
     QMAKE_POST_LINK += copy /Y \"$$TargetConfig\" \"$$OutputDir\"
 
     # 首先，定义static文件夹的路径

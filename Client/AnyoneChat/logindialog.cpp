@@ -144,10 +144,11 @@ void LoginDialog::initHttpHandlers()
 
 void LoginDialog::showTip(QString str)
 {
-    this->animation->setDirection(QTimeLine::Forward);
     this->notification->setText(str);
     this->notification->setGeometry(QRect(QPoint(this->rect().center().x() - (this->notification->width() / 2), this->rect().top() - (this->notification->height())), QSize(this->notification->size())));
     this->notification->show();
+
+    this->animation->setDirection(QTimeLine::Forward);
     this->animation->start();
     QTimer::singleShot(1000, this, [=]() {
         this->animation->setDirection(QTimeLine::Backward);

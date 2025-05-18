@@ -1,11 +1,11 @@
 /build
 /bin
-/Client/llfcchat/.qtc_clangd
-/Client/llfcchat/bin
-/Client/llfcchat/debug
-/Client/llfcchat/release
-/Client/llfcchat/build
-/Client/llfcchat/.qmake.stash
+/Client/AnyoneChat/.qtc_clangd
+/Client/AnyoneChat/bin
+/Client/AnyoneChat/debug
+/Client/AnyoneChat/release
+/Client/AnyoneChat/build
+/Client/AnyoneChat/.qmake.stash
 /VarifyServer/node_modules
 /.clangd
 /.cache

@@ -39,7 +39,7 @@ public:
 
     void retranslateUi(QMainWindow *MainWindow)
     {
-        MainWindow->setWindowTitle(QCoreApplication::translate("MainWindow", "llfcchat", nullptr));
+        MainWindow->setWindowTitle(QCoreApplication::translate("MainWindow", "AnyoneChat", nullptr));
     } // retranslateUi
 
 };
