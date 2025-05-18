@@ -1,4 +1,6 @@
+#include "const.h"
 #include "StatusGrpcClient.h"
+#include "ConfigMgr.h"
 
 GetChatServerRsp StatusGrpcClient::GetChatServer(int uid)
 {

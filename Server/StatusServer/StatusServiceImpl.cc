@@ -1,13 +1,13 @@
 #include "StatusServiceImpl.h"
 #include "ConfigMgr.h"
-#include "const.h"
-#include "RedisMgr.h"
 #include "Logger.h"
+#include "RedisMgr.h"
+#include "const.h"
 
-#include <climits>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <climits>
 
 std::string generate_unique_string()
 {
@@ -25,8 +25,8 @@ Status StatusServiceImpl::GetChatServer(ServerContext* context,
 {
     LOG_INFO("gRpc GetChatServer uid: {}", request->uid());
     const auto& server = getChatServer();
-    reply->set_host(server.host);
-    reply->set_port(server.port);
+    reply->set_host(server.host_);
+    reply->set_port(server.port_);
     reply->set_error(ErrorCodes::Success);
     reply->set_token(generate_unique_string());
     insertToken(request->uid(), reply->token());
@@ -56,20 +56,21 @@ StatusServiceImpl::StatusServiceImpl()
         }
 
         ChatServer server;
-        server.port           = cfg[word]["Port"];
-        server.host           = cfg[word]["Host"];
-        server.name           = cfg[word]["Name"];
-        _servers[server.name] = server;
+        server.port_           = cfg[word]["Port"];
+        server.host_           = cfg[word]["Host"];
+        server.name_           = cfg[word]["Name"];
+        servers_[server.name_] = server;
     }
 }
 
 ChatServer StatusServiceImpl::getChatServer()
 {
     LOG_INFO("Redis get chat server begin");
-    std::lock_guard<std::mutex> guard(_server_mtx);
-    auto                        minServer = _servers.begin()->second;
+    std::lock_guard<std::mutex> guard(mutex_);
+    auto                        minServer = servers_.begin()->second;
 
-    auto count_str = RedisMgr::GetInstance()->HGet(LOGIN_COUNT, minServer.name);
+    auto count_str =
+        RedisMgr::GetInstance()->HGet(LOGIN_COUNT, minServer.name_);
     if (count_str.empty())
     {
         // 不存在则默认设置为最大
@@ -81,16 +82,16 @@ ChatServer StatusServiceImpl::getChatServer()
     }
 
     // 使用范围基于for循环
-    for (auto& server : _servers)
+    for (auto& server : servers_)
     {
 
-        if (server.second.name == minServer.name)
+        if (server.second.name_ == minServer.name_)
         {
             continue;
         }
 
         auto count_str =
-            RedisMgr::GetInstance()->HGet(LOGIN_COUNT, server.second.name);
+            RedisMgr::GetInstance()->HGet(LOGIN_COUNT, server.second.name_);
         if (count_str.empty())
         {
             server.second.con_count = INT_MAX;
@@ -131,12 +132,11 @@ Status StatusServiceImpl::Login(
     if (token_value != token)
     {
         LOG_INFO("Redis token not match, redis_token: {}, recv_token: {}",
-            token_value, token);
+                 token_value, token);
         reply->set_error(ErrorCodes::TokenInvalid);
         return Status::OK;
     }
-    LOG_INFO("Redis token match, uid: {}, token: {}",
-        uid, token);
+    LOG_INFO("Redis token match, uid: {}, token: {}", uid, token);
     reply->set_error(ErrorCodes::Success);
     reply->set_uid(uid);
     reply->set_token(token);

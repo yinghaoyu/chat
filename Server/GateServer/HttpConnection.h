@@ -19,7 +19,7 @@ class HttpConnection : public std::enable_shared_from_this<HttpConnection>
     void Start();
     void PreParseGetParam();
 
-    tcp::socket& GetSocket() { return m_socket; }
+    tcp::socket& GetSocket() { return socket_; }
 
     void HandleGetRequest();
     void HandlePostRequest();
@@ -30,17 +30,17 @@ class HttpConnection : public std::enable_shared_from_this<HttpConnection>
     void WriteResponse();
     void HandleReq();
 
-    tcp::socket m_socket;
+    tcp::socket socket_;
 
-    beast::flat_buffer m_buffer{8192};
+    beast::flat_buffer buffer_{8192};
 
-    http::request<http::dynamic_body> m_request;
+    http::request<http::dynamic_body> request_;
 
-    http::response<http::dynamic_body> m_response;
+    http::response<http::dynamic_body> response_;
 
-    net::steady_timer m_deadline{
-        m_socket.get_executor(), std::chrono::seconds(60)};
+    net::steady_timer deadline_{
+        socket_.get_executor(), std::chrono::seconds(60)};
 
-    std::string                                  m_url;
-    std::unordered_map<std::string, std::string> m_params;
+    std::string                                  url_;
+    std::unordered_map<std::string, std::string> params_;
 };

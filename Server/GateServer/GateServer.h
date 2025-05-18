@@ -1,9 +1,9 @@
 #pragma once
 
-#include <memory>
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <boost/beast/http.hpp>
+#include <memory>
 
 namespace net = boost::asio;           // from <boost/asio.hpp>
 using tcp     = boost::asio::ip::tcp;  // from <boost/asio/ip/tcp.hpp>
@@ -15,6 +15,6 @@ class GateServer : public std::enable_shared_from_this<GateServer>
     void Start();
 
   private:
-    tcp::acceptor    m_acceptor;
-    net::io_context& m_ioc;
+    tcp::acceptor    acceptor_;
+    net::io_context& ioc_;
 };

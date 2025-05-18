@@ -1,6 +1,6 @@
 #include "HttpConnection.h"
-#include "LogicSystem.h"
 #include "Logger.h"
+#include "LogicSystem.h"
 
 namespace
 {
@@ -57,15 +57,13 @@ std::string UrlDecode(const std::string& str)
 }
 }  // namespace
 
-HttpConnection::HttpConnection(boost::asio::io_context& ioc) : m_socket(ioc) {}
+HttpConnection::HttpConnection(boost::asio::io_context& ioc) : socket_(ioc) {}
 
 void HttpConnection::Start()
 {
     auto self = shared_from_this();
-    http::async_read(m_socket,
-        m_buffer,
-        m_request,
-        [self](beast::error_code ec, std::size_t) {
+    http::async_read(
+        socket_, buffer_, request_, [self](beast::error_code ec, std::size_t) {
             try
             {
                 if (ec)
@@ -85,11 +83,11 @@ void HttpConnection::Start()
 
 void HttpConnection::HandleReq()
 {
-    m_response.version(m_request.version());
-    m_response.keep_alive(false);
-    m_response.set(boost::beast::http::field::access_control_allow_origin, "*");
+    response_.version(request_.version());
+    response_.keep_alive(false);
+    response_.set(boost::beast::http::field::access_control_allow_origin, "*");
 
-    switch (m_request.method())
+    switch (request_.method())
     {
         case http::verb::get: HandleGetRequest(); break;
         case http::verb::post: HandlePostRequest(); break;
@@ -103,48 +101,48 @@ void HttpConnection::HandleReq()
 void HttpConnection::HandleGetRequest()
 {
     PreParseGetParam();
-    if (!LogicSystem::GetInstance()->HandleGet(m_url, shared_from_this()))
+    if (!LogicSystem::GetInstance()->HandleGet(url_, shared_from_this()))
     {
         SendErrorResponse(http::status::not_found, "url not found\r\n");
         return;
     }
-    m_response.result(http::status::ok);
-    m_response.set(http::field::server, "GateServer");
+    response_.result(http::status::ok);
+    response_.set(http::field::server, "GateServer");
     WriteResponse();
 }
 
 void HttpConnection::HandlePostRequest()
 {
     if (!LogicSystem::GetInstance()->HandlePost(
-            m_request.target(), shared_from_this()))
+            request_.target(), shared_from_this()))
     {
         SendErrorResponse(http::status::not_found, "url not found\r\n");
         return;
     }
-    m_response.result(http::status::ok);
-    m_response.set(http::field::server, "GateServer");
+    response_.result(http::status::ok);
+    response_.set(http::field::server, "GateServer");
     WriteResponse();
 }
 
 void HttpConnection::SendErrorResponse(
     http::status status, const std::string& message)
 {
-    m_response.result(status);
-    m_response.set(http::field::content_type, "text/plain");
-    beast::ostream(m_response.body()) << message;
+    response_.result(status);
+    response_.set(http::field::content_type, "text/plain");
+    beast::ostream(response_.body()) << message;
     WriteResponse();
 }
 
 void HttpConnection::PreParseGetParam()
 {
-    auto uri       = m_request.target();
+    auto uri       = request_.target();
     auto query_pos = uri.find('?');
     if (query_pos == std::string::npos)
     {
-        m_url = uri;
+        url_ = uri;
         return;
     }
-    m_url                 = uri.substr(0, query_pos);
+    url_                     = uri.substr(0, query_pos);
     std::string query_string = uri.substr(query_pos + 1);
     size_t      pos          = 0;
     while ((pos = query_string.find('&')) != std::string::npos)
@@ -153,7 +151,7 @@ void HttpConnection::PreParseGetParam()
         size_t eq_pos = pair.find('=');
         if (eq_pos != std::string::npos)
         {
-            m_params[UrlDecode(pair.substr(0, eq_pos))] =
+            params_[UrlDecode(pair.substr(0, eq_pos))] =
                 UrlDecode(pair.substr(eq_pos + 1));
         }
         query_string.erase(0, pos + 1);
@@ -163,7 +161,7 @@ void HttpConnection::PreParseGetParam()
         size_t eq_pos = query_string.find('=');
         if (eq_pos != std::string::npos)
         {
-            m_params[UrlDecode(query_string.substr(0, eq_pos))] =
+            params_[UrlDecode(query_string.substr(0, eq_pos))] =
                 UrlDecode(query_string.substr(eq_pos + 1));
         }
     }
@@ -172,10 +170,10 @@ void HttpConnection::PreParseGetParam()
 void HttpConnection::CheckDeadline()
 {
     auto self = shared_from_this();
-    m_deadline.async_wait([self](beast::error_code ec) {
+    deadline_.async_wait([self](beast::error_code ec) {
         if (!ec)
         {
-            self->m_socket.close(ec);
+            self->socket_.close(ec);
         }
     });
 }
@@ -183,17 +181,17 @@ void HttpConnection::CheckDeadline()
 void HttpConnection::WriteResponse()
 {
     auto self = shared_from_this();
-    m_response.content_length(m_response.body().size());
+    response_.content_length(response_.body().size());
     http::async_write(
-        m_socket, m_response, [self](beast::error_code ec, std::size_t) {
-            if(ec)
+        socket_, response_, [self](beast::error_code ec, std::size_t) {
+            if (ec)
             {
-                self->m_socket.close(ec);
+                self->socket_.close(ec);
             }
             else
             {
-                self->m_socket.shutdown(tcp::socket::shutdown_send, ec);
+                self->socket_.shutdown(tcp::socket::shutdown_send, ec);
             }
-            self->m_deadline.cancel();
+            self->deadline_.cancel();
         });
 }

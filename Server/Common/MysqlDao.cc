@@ -197,10 +197,10 @@ bool MysqlDao::CheckPwd(
             }
 
             // 填充 userInfo
-            userInfo.uid   = result->getInt32(0);
-            userInfo.name  = result->getString(1);
-            userInfo.email = result->getString(2);
-            userInfo.pwd   = origin_pwd;
+            userInfo.uid_   = result->getInt32(0);
+            userInfo.name_  = result->getString(1);
+            userInfo.email_ = result->getString(2);
+            userInfo.pwd_   = origin_pwd;
 
             return true;
         }
@@ -233,12 +233,16 @@ bool MysqlDao::AddFriendApply(const int from, const int to)
 
         if (ret == 0)
         {
-            LOG_DEBUG("Friend apply added or updated successfully, fromuid: {}, touid: {}", from, to);
+            LOG_DEBUG("Friend apply added or updated successfully, fromuid: "
+                      "{}, touid: {}",
+                      from, to);
             return true;
         }
         else
         {
-            LOG_ERROR("No rows affected for friend apply, fromuid: {}, touid: {} ", from, to);
+            LOG_ERROR(
+                "No rows affected for friend apply, fromuid: {}, touid: {} ",
+                from, to);
             return false;
         }
     }
@@ -268,12 +272,16 @@ bool MysqlDao::AuthFriendApply(const int from, const int to)
 
         if (ret == 0)
         {
-            LOG_DEBUG("Friend apply authenticated successfully, fromuid: {}, touid: {}", from, to);
+            LOG_DEBUG("Friend apply authenticated successfully, fromuid: {}, "
+                      "touid: {}",
+                      from, to);
             return true;
         }
         else
         {
-            LOG_ERROR("No rows affected for friend apply authentication, fromuid: {}, touid: {}", from, to);
+            LOG_ERROR("No rows affected for friend apply authentication, "
+                      "fromuid: {}, touid: {}",
+                      from, to);
             return false;
         }
     }
@@ -339,7 +347,9 @@ bool MysqlDao::AddFriend(
             return false;
         }
 
-        LOG_DEBUG("Friend relationship added successfully, fromuid: {}, touid: {}", from, to);
+        LOG_DEBUG(
+            "Friend relationship added successfully, fromuid: {}, touid: {}",
+            from, to);
         return true;
     }
     catch (const std::exception& e)
@@ -367,22 +377,22 @@ std::shared_ptr<UserInfo> MysqlDao::GetUser(const int uid)
                 (int32_t)uid);
         if (result && result->next())
         {
-            auto user_ptr   = std::make_shared<UserInfo>();
-            user_ptr->uid   = uid;
-            user_ptr->name  = result->getString(1);
-            user_ptr->email = result->getString(2);
-            user_ptr->pwd   = result->getString(3);
-            user_ptr->nick  = result->getString(4);
-            user_ptr->desc  = result->getString(5);
-            user_ptr->sex   = result->getInt32(6);
-            user_ptr->icon  = result->getString(7);
+            auto user_ptr    = std::make_shared<UserInfo>();
+            user_ptr->uid_   = uid;
+            user_ptr->name_  = result->getString(1);
+            user_ptr->email_ = result->getString(2);
+            user_ptr->pwd_   = result->getString(3);
+            user_ptr->nick_  = result->getString(4);
+            user_ptr->desc_  = result->getString(5);
+            user_ptr->sex_   = result->getInt32(6);
+            user_ptr->icon_  = result->getString(7);
             return user_ptr;
         }
         return nullptr;
     }
     catch (const std::exception& e)
     {
-        LOG_ERROR("Exception in GetUser: {}" ,e.what());
+        LOG_ERROR("Exception in GetUser: {}", e.what());
         return nullptr;
     }
 }
@@ -404,15 +414,15 @@ std::shared_ptr<UserInfo> MysqlDao::GetUser(const std::string& name)
                 name.c_str());
         if (result && result->next())
         {
-            auto user_ptr   = std::make_shared<UserInfo>();
-            user_ptr->uid   = result->getInt32(0);
-            user_ptr->name  = name;
-            user_ptr->email = result->getString(2);
-            user_ptr->pwd   = result->getString(3);
-            user_ptr->nick  = result->getString(4);
-            user_ptr->desc  = result->getString(5);
-            user_ptr->sex   = result->getInt32(6);
-            user_ptr->icon  = result->getString(7);
+            auto user_ptr    = std::make_shared<UserInfo>();
+            user_ptr->uid_   = result->getInt32(0);
+            user_ptr->name_  = name;
+            user_ptr->email_ = result->getString(2);
+            user_ptr->pwd_   = result->getString(3);
+            user_ptr->nick_  = result->getString(4);
+            user_ptr->desc_  = result->getString(5);
+            user_ptr->sex_   = result->getInt32(6);
+            user_ptr->icon_  = result->getString(7);
             return user_ptr;
         }
         return nullptr;
@@ -493,14 +503,14 @@ bool MysqlDao::GetFriendList(
         // 遍历结果集
         while (result && result->next())
         {
-            auto user_ptr   = std::make_shared<UserInfo>();
-            user_ptr->uid   = result->getInt32(0);
-            user_ptr->name  = result->getString(2);
-            user_ptr->email = result->getString(3);
-            user_ptr->nick  = result->getString(4);
-            user_ptr->sex   = result->getInt32(5);
-            user_ptr->icon  = result->getString(6);
-            user_ptr->back  = result->getString(1);
+            auto user_ptr    = std::make_shared<UserInfo>();
+            user_ptr->uid_   = result->getInt32(0);
+            user_ptr->name_  = result->getString(2);
+            user_ptr->email_ = result->getString(3);
+            user_ptr->nick_  = result->getString(4);
+            user_ptr->sex_   = result->getInt32(5);
+            user_ptr->icon_  = result->getString(6);
+            user_ptr->back_  = result->getString(1);
 
             user_info_list.push_back(user_ptr);
         }

@@ -2,9 +2,9 @@
 
 #include "Singleton.h"
 
-#include <spdlog/spdlog.h>
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/spdlog.h>
 
 class Logger : public Singleton<Logger>
 {
@@ -15,12 +15,12 @@ class Logger : public Singleton<Logger>
 
     void Init();
 
-    std::shared_ptr<spdlog::logger> GetLogger() { return _logger; }
+    std::shared_ptr<spdlog::logger> GetLogger() { return logger_; }
 
   private:
     Logger() { Init(); }
 
-    std::shared_ptr<spdlog::logger> _logger;
+    std::shared_ptr<spdlog::logger> logger_;
 };
 
 #ifndef LOG_TRACE

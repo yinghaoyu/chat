@@ -1,7 +1,7 @@
 #include "RedisMgr.h"
-#include "const.h"
 #include "ConfigMgr.h"
 #include "DistLock.h"
+#include "const.h"
 
 RedisMgr::RedisMgr()
 {
@@ -9,14 +9,14 @@ RedisMgr::RedisMgr()
     auto  host    = gCfgMgr["Redis"]["Host"];
     auto  port    = gCfgMgr["Redis"]["Port"];
     auto  pwd     = gCfgMgr["Redis"]["Passwd"];
-    _con_pool.reset(new RedisPool(host, stoi(port), pwd, 10));
+    con_pool_.reset(new RedisPool(host, stoi(port), pwd, 10));
 }
 
 RedisMgr::~RedisMgr() {}
 
 bool RedisMgr::Get(const std::string& key, std::string& value)
 {
-    auto connect = _con_pool->get();
+    auto connect = con_pool_->get();
     if (connect == nullptr)
     {
         return false;
@@ -44,7 +44,7 @@ bool RedisMgr::Get(const std::string& key, std::string& value)
 bool RedisMgr::Set(const std::string& key, const std::string& value)
 {
     // 执行redis命令行
-    auto connect = _con_pool->get();
+    auto connect = con_pool_->get();
     if (connect == nullptr)
     {
         return false;
@@ -75,7 +75,7 @@ bool RedisMgr::Set(const std::string& key, const std::string& value)
 
 bool RedisMgr::LPush(const std::string& key, const std::string& value)
 {
-    auto connect = _con_pool->get();
+    auto connect = con_pool_->get();
     if (connect == nullptr)
     {
         return false;
@@ -105,7 +105,7 @@ bool RedisMgr::LPush(const std::string& key, const std::string& value)
 
 bool RedisMgr::LPop(const std::string& key, std::string& value)
 {
-    auto connect = _con_pool->get();
+    auto connect = con_pool_->get();
     if (connect == nullptr)
     {
         return false;
@@ -135,7 +135,7 @@ bool RedisMgr::LPop(const std::string& key, std::string& value)
 
 bool RedisMgr::RPush(const std::string& key, const std::string& value)
 {
-    auto connect = _con_pool->get();
+    auto connect = con_pool_->get();
     if (connect == nullptr)
     {
         return false;
@@ -164,7 +164,7 @@ bool RedisMgr::RPush(const std::string& key, const std::string& value)
 }
 bool RedisMgr::RPop(const std::string& key, std::string& value)
 {
-    auto connect = _con_pool->get();
+    auto connect = con_pool_->get();
     if (connect == nullptr)
     {
         return false;
@@ -194,7 +194,7 @@ bool RedisMgr::RPop(const std::string& key, std::string& value)
 bool RedisMgr::HSet(
     const std::string& key, const std::string& hkey, const std::string& value)
 {
-    auto connect = _con_pool->get();
+    auto connect = con_pool_->get();
     if (connect == nullptr)
     {
         return false;
@@ -226,7 +226,7 @@ bool RedisMgr::HSet(
 bool RedisMgr::HSet(
     const char* key, const char* hkey, const char* hvalue, size_t hvaluelen)
 {
-    auto connect = _con_pool->get();
+    auto connect = con_pool_->get();
     if (connect == nullptr)
     {
         return false;
@@ -257,7 +257,7 @@ bool RedisMgr::HSet(
 
 std::string RedisMgr::HGet(const std::string& key, const std::string& hkey)
 {
-    auto connect = _con_pool->get();
+    auto connect = con_pool_->get();
     if (connect == nullptr)
     {
         return "";
@@ -290,7 +290,7 @@ std::string RedisMgr::HGet(const std::string& key, const std::string& hkey)
 
 bool RedisMgr::HDel(const std::string& key, const std::string& field)
 {
-    auto connect = _con_pool->get();
+    auto connect = con_pool_->get();
     if (connect == nullptr)
     {
         return false;
@@ -314,7 +314,7 @@ bool RedisMgr::HDel(const std::string& key, const std::string& field)
 
 bool RedisMgr::Del(const std::string& key)
 {
-    auto connect = _con_pool->get();
+    auto connect = con_pool_->get();
     if (connect == nullptr)
     {
         return false;
@@ -343,7 +343,7 @@ bool RedisMgr::Del(const std::string& key)
 
 bool RedisMgr::ExistsKey(const std::string& key)
 {
-    auto connect = _con_pool->get();
+    auto connect = con_pool_->get();
     if (connect == nullptr)
     {
         return false;
@@ -372,7 +372,7 @@ std::string RedisMgr::acquireLock(
     const std::string& lockName, int lockTimeout, int acquireTimeout)
 {
 
-    auto connect = _con_pool->get();
+    auto connect = con_pool_->get();
     if (connect == nullptr)
     {
         return "";
@@ -391,7 +391,7 @@ bool RedisMgr::releaseLock(
     {
         return true;
     }
-    auto connect = _con_pool->get();
+    auto connect = con_pool_->get();
     if (connect == nullptr)
     {
         return false;

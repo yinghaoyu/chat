@@ -1,7 +1,7 @@
 #pragma once
 
-#include <iostream>
 #include <boost/asio.hpp>
+#include <iostream>
 
 using namespace std;
 using boost::asio::ip::tcp;
@@ -10,27 +10,27 @@ class LogicSystem;
 class MsgNode
 {
   public:
-    MsgNode(short max_len) : _total_len(max_len), _cur_len(0)
+    MsgNode(short max_len) : total_len_(max_len), cur_len_(0)
     {
-        _data             = new char[_total_len + 1]();
-        _data[_total_len] = '\0';
+        data_             = new char[total_len_ + 1]();
+        data_[total_len_] = '\0';
     }
 
     ~MsgNode()
     {
         std::cout << "MsgNode dtor~" << endl;
-        delete[] _data;
+        delete[] data_;
     }
 
     void Clear()
     {
-        ::memset(_data, 0, _total_len);
-        _cur_len = 0;
+        ::memset(data_, 0, total_len_);
+        cur_len_ = 0;
     }
 
-    short _cur_len;
-    short _total_len;
-    char* _data;
+    short cur_len_;
+    short total_len_;
+    char* data_;
 };
 
 class RecvNode : public MsgNode
@@ -41,7 +41,7 @@ class RecvNode : public MsgNode
     RecvNode(short max_len, short msg_id);
 
   private:
-    short _msg_id;
+    short msg_id_;
 };
 
 class SendNode : public MsgNode
@@ -52,5 +52,5 @@ class SendNode : public MsgNode
     SendNode(const char* msg, short max_len, short msg_id);
 
   private:
-    short _msg_id;
+    short msg_id_;
 };

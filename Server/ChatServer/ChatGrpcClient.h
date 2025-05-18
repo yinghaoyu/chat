@@ -1,16 +1,16 @@
 #pragma once
 
 #include "Singleton.h"
+#include "data.h"
 #include "message.grpc.pb.h"
 #include "message.pb.h"
-#include "data.h"
 
-#include <grpcpp/grpcpp.h>
-#include <queue>
 #include <condition_variable>
+#include <grpcpp/grpcpp.h>
 #include <jsoncpp/json/json.h>
-#include <jsoncpp/json/value.h>
 #include <jsoncpp/json/reader.h>
+#include <jsoncpp/json/value.h>
+#include <queue>
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -37,8 +37,9 @@ using message::KickUserRsp;
 class ChatConPool
 {
   public:
-    ChatConPool(size_t poolSize, std::string host, std::string port)
-        : poolSize_(poolSize), host_(host), port_(port), b_stop_(false)
+    ChatConPool(
+        const size_t poolSize, const std::string& host, const std::string& port)
+        : poolSize_(poolSize), host_(host), port_(port), stopped_(false)
     {
         for (size_t i = 0; i < poolSize_; ++i)
         {
@@ -64,14 +65,14 @@ class ChatConPool
     {
         std::unique_lock<std::mutex> lock(mutex_);
         cond_.wait(lock, [this] {
-            if (b_stop_)
+            if (stopped_)
             {
                 return true;
             }
             return !connections_.empty();
         });
         // 如果停止则直接返回空指针
-        if (b_stop_)
+        if (stopped_)
         {
             return nullptr;
         }
@@ -89,12 +90,12 @@ class ChatConPool
 
     void Close()
     {
-        b_stop_ = true;
+        stopped_ = true;
         cond_.notify_all();
     }
 
   private:
-    atomic<bool>                                   b_stop_;
+    std::atomic<bool>                              stopped_;
     size_t                                         poolSize_;
     std::string                                    host_;
     std::string                                    port_;
@@ -111,16 +112,21 @@ class ChatGrpcClient : public Singleton<ChatGrpcClient>
     ~ChatGrpcClient() {}
 
     AddFriendRsp NotifyAddFriend(
-        std::string server_ip, const AddFriendReq& req);
+        const std::string& server_ip, const AddFriendReq& req);
+
     AuthFriendRsp NotifyAuthFriend(
-        std::string server_ip, const AuthFriendReq& req);
-    bool GetBaseInfo(
-        std::string base_key, int uid, std::shared_ptr<UserInfo>& userinfo);
-    TextChatMsgRsp NotifyTextChatMsg(std::string server_ip,
+        const std::string& server_ip, const AuthFriendReq& req);
+
+    bool GetBaseInfo(const std::string& base_key, int uid,
+        std::shared_ptr<UserInfo>& userinfo);
+
+    TextChatMsgRsp NotifyTextChatMsg(const std::string& server_ip,
         const TextChatMsgReq& req, const Json::Value& rtvalue);
-    KickUserRsp NotifyKickUser(std::string server_ip, const KickUserReq& req);
+
+    KickUserRsp NotifyKickUser(
+        const std::string& server_ip, const KickUserReq& req);
 
   private:
     ChatGrpcClient();
-    unordered_map<std::string, std::unique_ptr<ChatConPool>> _pools;
+    std::unordered_map<std::string, std::unique_ptr<ChatConPool>> pools_;
 };

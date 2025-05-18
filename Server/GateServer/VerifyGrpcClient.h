@@ -1,14 +1,14 @@
 #pragma once
 
-#include "message.grpc.pb.h"
-#include "const.h"
 #include "Singleton.h"
+#include "const.h"
+#include "message.grpc.pb.h"
 
-#include <queue>
-#include <string>
-#include <memory>
 #include <condition_variable>
 #include <grpcpp/grpcpp.h>
+#include <memory>
+#include <queue>
+#include <string>
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -22,7 +22,7 @@ class RPConPool
 {
   public:
     RPConPool(size_t poolSize, std::string host, std::string port)
-        : poolSize_(poolSize), host_(host), port_(port), b_stop_(false)
+        : poolSize_(poolSize), host_(host), port_(port), stopped_(false)
     {
         for (size_t i = 0; i < poolSize_; ++i)
         {
@@ -48,14 +48,14 @@ class RPConPool
     {
         std::unique_lock<std::mutex> lock(mutex_);
         cond_.wait(lock, [this] {
-            if (b_stop_)
+            if (stopped_)
             {
                 return true;
             }
             return !connections_.empty();
         });
         // 如果停止则直接返回空指针
-        if (b_stop_)
+        if (stopped_)
         {
             return nullptr;
         }
@@ -67,7 +67,7 @@ class RPConPool
     void returnConnection(std::unique_ptr<VarifyService::Stub> context)
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        if (b_stop_)
+        if (stopped_)
         {
             return;
         }
@@ -77,12 +77,12 @@ class RPConPool
 
     void Close()
     {
-        b_stop_ = true;
+        stopped_ = true;
         cond_.notify_all();
     }
 
   private:
-    atomic<bool>                                     b_stop_;
+    atomic<bool>                                     stopped_;
     size_t                                           poolSize_;
     std::string                                      host_;
     std::string                                      port_;

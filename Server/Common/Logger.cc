@@ -10,8 +10,8 @@ void Logger::Init()
     const auto& level   = cfg["Logger"]["Level"];
     const auto& pattern = cfg["Logger"]["Pattern"];
 
-    _logger = spdlog::basic_logger_mt<spdlog::async_factory>("log", path);
-    _logger->set_level(spdlog::level::from_str(level));
-    _logger->set_pattern(pattern);
-    _logger->flush_on(spdlog::level::from_str(level));
+    logger_ = spdlog::basic_logger_mt<spdlog::async_factory>("log", path);
+    logger_->set_level(spdlog::level::from_str(level));
+    logger_->set_pattern(pattern);
+    logger_->flush_on(spdlog::level::from_str(level));
 }

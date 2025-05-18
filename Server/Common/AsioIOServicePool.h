@@ -2,8 +2,8 @@
 
 #include "Singleton.h"
 
-#include <vector>
 #include <boost/asio.hpp>
+#include <vector>
 
 class AsioIOServicePool : public Singleton<AsioIOServicePool>
 {
@@ -26,8 +26,8 @@ class AsioIOServicePool : public Singleton<AsioIOServicePool>
   private:
     AsioIOServicePool(
         std::size_t size = 2 /* std::thread::hardware_concurrency() */);
-    std::vector<IOService>    _ioServices;
-    std::vector<WorkGuardPtr> _workGuards;
-    std::vector<std::thread>  _threads;
-    std::size_t               _nextIOService;
+    std::vector<IOService>    ioServices_;
+    std::vector<WorkGuardPtr> workGuards_;
+    std::vector<std::thread>  threads_;
+    std::size_t               nextIOService_;
 };

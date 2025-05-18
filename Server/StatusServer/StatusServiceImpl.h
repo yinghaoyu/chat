@@ -18,9 +18,12 @@ using message::StatusService;
 class ChatServer
 {
   public:
-    ChatServer() : host(""), port(""), name(""), con_count(0) {}
+    ChatServer() : host_(""), port_(""), name_(""), con_count(0) {}
     ChatServer(const ChatServer& cs)
-        : host(cs.host), port(cs.port), name(cs.name), con_count(cs.con_count)
+        : host_(cs.host_),
+          port_(cs.port_),
+          name_(cs.name_),
+          con_count(cs.con_count)
     {}
     ChatServer& operator=(const ChatServer& cs)
     {
@@ -29,15 +32,15 @@ class ChatServer
             return *this;
         }
 
-        host      = cs.host;
-        name      = cs.name;
-        port      = cs.port;
+        host_     = cs.host_;
+        name_     = cs.name_;
+        port_     = cs.port_;
         con_count = cs.con_count;
         return *this;
     }
-    std::string host;
-    std::string port;
-    std::string name;
+    std::string host_;
+    std::string port_;
+    std::string name_;
     int         con_count;
 };
 class StatusServiceImpl final : public StatusService::Service
@@ -52,6 +55,6 @@ class StatusServiceImpl final : public StatusService::Service
   private:
     void       insertToken(int uid, std::string token);
     ChatServer getChatServer();
-    std::unordered_map<std::string, ChatServer> _servers;
-    std::mutex                                  _server_mtx;
+    std::unordered_map<std::string, ChatServer> servers_;
+    std::mutex                                  mutex_;
 };

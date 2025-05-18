@@ -32,11 +32,11 @@ ConfigMgr::ConfigMgr()
         SectionInfo sectionInfo;
         sectionInfo._section_datas = section_config;
         // 将section的key-value对保存到config_map中
-        _config_map[section_name] = sectionInfo;
+        config_map_[section_name] = sectionInfo;
     }
 
     // 输出所有的section和key-value对
-    for (const auto& section_entry : _config_map)
+    for (const auto& section_entry : config_map_)
     {
         const std::string& section_name   = section_entry.first;
         SectionInfo        section_config = section_entry.second;
@@ -52,10 +52,10 @@ ConfigMgr::ConfigMgr()
 std::string ConfigMgr::GetValue(
     const std::string& section, const std::string& key)
 {
-    if (_config_map.find(section) == _config_map.end())
+    if (config_map_.find(section) == config_map_.end())
     {
         return "";
     }
 
-    return _config_map[section].GetValue(key);
+    return config_map_[section].GetValue(key);
 }

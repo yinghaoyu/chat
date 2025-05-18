@@ -1,9 +1,9 @@
 #pragma once
 
+#include "ChatServer.h"
+#include "data.h"
 #include "message.grpc.pb.h"
 #include "message.pb.h"
-#include "data.h"
-#include "CServer.h"
 
 #include <grpcpp/grpcpp.h>
 #include <memory>
@@ -45,8 +45,8 @@ class ChatServiceImpl final : public ChatService::Service
     Status NotifyKickUser(::grpc::ServerContext* context,
         const KickUserReq* request, KickUserRsp* response) override;
 
-    void RegisterServer(std::shared_ptr<CServer> pServer);
+    void RegisterServer(std::shared_ptr<ChatServer>);
 
   private:
-    std::shared_ptr<CServer> _p_server;
+    std::shared_ptr<ChatServer> server_;
 };

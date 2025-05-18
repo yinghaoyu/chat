@@ -31,5 +31,5 @@ class MysqlMgr : public Singleton<MysqlMgr>
 
   private:
     MysqlMgr();
-    MysqlDao _dao;
+    MysqlDao dao_;
 };

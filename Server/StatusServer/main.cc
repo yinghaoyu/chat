@@ -1,15 +1,15 @@
-﻿#include "StatusServiceImpl.h"
-#include "ConfigMgr.h"
+﻿#include "ConfigMgr.h"
 #include "Logger.h"
+#include "StatusServiceImpl.h"
 
-#include <jsoncpp/json/json.h>
-#include <jsoncpp/json/value.h>
-#include <jsoncpp/json/reader.h>
+#include <boost/asio.hpp>
 #include <hiredis/hiredis.h>
+#include <jsoncpp/json/json.h>
+#include <jsoncpp/json/reader.h>
+#include <jsoncpp/json/value.h>
 #include <memory>
 #include <string>
 #include <thread>
-#include <boost/asio.hpp>
 
 void RunServer()
 {
@@ -39,7 +39,8 @@ void RunServer()
             const boost::system::error_code& error, int signal_number) {
             if (!error)
             {
-                LOG_INFO("Received signal {}: shutting down server...", signal_number);
+                LOG_INFO("Received signal {}: shutting down server...",
+                         signal_number);
                 server->Shutdown();  // 优雅地关闭服务器
                 io_context.stop();   // 停止io_context
             }

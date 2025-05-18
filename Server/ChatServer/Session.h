@@ -1,28 +1,27 @@
 #pragma once
 
-#include "const.h"
 #include "MsgNode.h"
+#include "const.h"
 
 #include <boost/asio.hpp>
-#include <boost/uuid/uuid_io.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/beast/http.hpp>
 #include <boost/beast.hpp>
-#include <boost/asio.hpp>
-#include <queue>
-#include <mutex>
+#include <boost/beast/http.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include <memory>
+#include <mutex>
+#include <queue>
 
 using tcp = boost::asio::ip::tcp;  // from <boost/asio/ip/tcp.hpp>
 
-class CServer;
+class ChatServer;
 class LogicSystem;
 
-class CSession : public std::enable_shared_from_this<CSession>
+class Session : public std::enable_shared_from_this<Session>
 {
   public:
-    CSession(boost::asio::io_context& io_context, CServer* server);
-    ~CSession();
+    Session(boost::asio::io_context& io_context, ChatServer* server);
+    ~Session();
 
     tcp::socket&       GetSocket();
     const std::string& GetSessionId();
@@ -36,7 +35,7 @@ class CSession : public std::enable_shared_from_this<CSession>
     void ShutDownWrite();
     void Close();
 
-    std::shared_ptr<CSession> SharedSelf();
+    std::shared_ptr<Session> SharedSelf();
 
     void AsyncReadBody(int length);
     void AsyncReadHead(int total_len);
@@ -58,27 +57,27 @@ class CSession : public std::enable_shared_from_this<CSession>
         std::function<void(const boost::system::error_code&, std::size_t)>
             handler);
     void HandleWrite(
-        const boost::system::error_code&, std::shared_ptr<CSession>);
+        const boost::system::error_code&, std::shared_ptr<Session>);
 
-    tcp::socket _socket;
-    std::string _session_id;
-    char        _data[MAX_LENGTH];
-    CServer*    _server;
-    bool        _closed;
+    tcp::socket socket_;
+    std::string session_id_;
+    char        data_[MAX_LENGTH];
+    ChatServer* server_;
+    bool        closed_;
 
-    std::queue<shared_ptr<SendNode> > _send_que;
+    std::queue<shared_ptr<SendNode>> send_que_;
 
-    std::mutex _send_lock;
+    std::mutex send_mutex_;
     // 收到的消息结构
-    std::shared_ptr<RecvNode> _recv_msg_node;
-    bool                      _b_head_parse;
+    std::shared_ptr<RecvNode> recv_msg_node_;
+    bool                      head_parse_;
     // 收到的头部结构
-    std::shared_ptr<MsgNode> _recv_head_node;
-    int                      _user_uid;
+    std::shared_ptr<MsgNode> recv_head_node_;
+    int                      user_uid_;
     // 记录上次接受数据的时间
-    std::atomic<time_t> _last_heartbeat;
+    std::atomic<time_t> last_heartbeat_;
     // session 锁
-    std::mutex _session_mtx;
+    std::mutex session_mutex_;
 };
 
 class LogicNode
@@ -86,9 +85,9 @@ class LogicNode
     friend class LogicSystem;
 
   public:
-    LogicNode(shared_ptr<CSession>, shared_ptr<RecvNode>);
+    LogicNode(shared_ptr<Session>, shared_ptr<RecvNode>);
 
   private:
-    shared_ptr<CSession> _session;
-    shared_ptr<RecvNode> _recvnode;
+    shared_ptr<Session>  session_;
+    shared_ptr<RecvNode> recv_node_;
 };

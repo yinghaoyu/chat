@@ -1,13 +1,13 @@
 #include "ChatServiceImpl.h"
-#include "UserMgr.h"
-#include "CSession.h"
-#include "RedisMgr.h"
-#include "MysqlMgr.h"
+#include "Session.h"
 #include "Logger.h"
+#include "RedisMgr.h"
+#include "UserMgr.h"
+#include "MysqlMgr.h"
 
 #include <jsoncpp/json/json.h>
-#include <jsoncpp/json/value.h>
 #include <jsoncpp/json/reader.h>
+#include <jsoncpp/json/value.h>
 
 ChatServiceImpl::ChatServiceImpl() {}
 
@@ -27,7 +27,8 @@ Status ChatServiceImpl::NotifyAddFriend(
     // 用户不在内存中则直接返回
     if (session == nullptr)
     {
-        LOG_ERROR("NotifyAddFriend touid not in memory, fromuid: {}, touid: {}", request->applyuid(), touid);
+        LOG_ERROR("NotifyAddFriend touid not in memory, fromuid: {}, touid: {}",
+                  request->applyuid(), touid);
         return Status::OK;
     }
     // 在内存中则直接发送通知对方
@@ -41,9 +42,11 @@ Status ChatServiceImpl::NotifyAddFriend(
     rtvalue["nick"]     = request->nick();
 
     std::string return_str = rtvalue.toStyledString();
-    LOG_INFO("NotifyAddFriend session send begin, fromuid: {}, touid: {}", request->applyuid(), touid);
+    LOG_INFO("NotifyAddFriend session send begin, fromuid: {}, touid: {}",
+             request->applyuid(), touid);
     session->Send(return_str, ID_NOTIFY_ADD_FRIEND_REQ);
-    LOG_INFO("NotifyAddFriend session send finish, fromuid: {}, touid: {}", request->applyuid(), touid);
+    LOG_INFO("NotifyAddFriend session send finish, fromuid: {}, touid: {}",
+             request->applyuid(), touid);
     return Status::OK;
 }
 
@@ -64,7 +67,9 @@ Status ChatServiceImpl::NotifyAuthFriend(
     // 用户不在内存中则直接返回
     if (session == nullptr)
     {
-        LOG_ERROR("NotifyAuthFriend touid not in memory, fromuid: {}, touid: {}", request->fromuid(), touid);
+        LOG_ERROR(
+            "NotifyAuthFriend touid not in memory, fromuid: {}, touid: {}",
+            request->fromuid(), touid);
         return Status::OK;
     }
     // 在内存中则直接发送通知对方
@@ -78,10 +83,10 @@ Status ChatServiceImpl::NotifyAuthFriend(
     bool        b_info    = GetBaseInfo(base_key, fromuid, user_info);
     if (b_info)
     {
-        rtvalue["name"] = user_info->name;
-        rtvalue["nick"] = user_info->nick;
-        rtvalue["icon"] = user_info->icon;
-        rtvalue["sex"]  = user_info->sex;
+        rtvalue["name"] = user_info->name_;
+        rtvalue["nick"] = user_info->nick_;
+        rtvalue["icon"] = user_info->icon_;
+        rtvalue["sex"]  = user_info->sex_;
     }
     else
     {
@@ -89,9 +94,11 @@ Status ChatServiceImpl::NotifyAuthFriend(
     }
 
     std::string return_str = rtvalue.toStyledString();
-    LOG_INFO("NotifyAuthFriend session send begin, fromuid: {}, touid: {}", request->fromuid(), touid);
+    LOG_INFO("NotifyAuthFriend session send begin, fromuid: {}, touid: {}",
+             request->fromuid(), touid);
     session->Send(return_str, ID_NOTIFY_AUTH_FRIEND_REQ);
-    LOG_INFO("NotifyAuthFriend session send finish, fromuid: {}, touid: {}", request->fromuid(), touid);
+    LOG_INFO("NotifyAuthFriend session send finish, fromuid: {}, touid: {}",
+             request->fromuid(), touid);
     return Status::OK;
 }
 
@@ -106,7 +113,9 @@ Status ChatServiceImpl::NotifyTextChatMsg(::grpc::ServerContext* context,
     // 用户不在内存中则直接返回
     if (session == nullptr)
     {
-        LOG_ERROR("NotifyTextChatMsg touid not in memory, fromuid: {}, touid: {}", request->fromuid(), touid);
+        LOG_ERROR(
+            "NotifyTextChatMsg touid not in memory, fromuid: {}, touid: {}",
+            request->fromuid(), touid);
         return Status::OK;
     }
 
@@ -128,9 +137,11 @@ Status ChatServiceImpl::NotifyTextChatMsg(::grpc::ServerContext* context,
     rtvalue["text_array"] = text_array;
 
     std::string return_str = rtvalue.toStyledString();
-    LOG_INFO("NotifyTextChatMsg session send begin, fromuid: {}, touid: {}", request->fromuid(), touid);
+    LOG_INFO("NotifyTextChatMsg session send begin, fromuid: {}, touid: {}",
+             request->fromuid(), touid);
     session->Send(return_str, ID_NOTIFY_TEXT_CHAT_MSG_REQ);
-    LOG_INFO("NotifyTextChatMsg session send finsh, fromuid: {}, touid: {}", request->fromuid(), touid);
+    LOG_INFO("NotifyTextChatMsg session send finsh, fromuid: {}, touid: {}",
+             request->fromuid(), touid);
     return Status::OK;
 }
 
@@ -145,18 +156,18 @@ bool ChatServiceImpl::GetBaseInfo(
         Json::Reader reader;
         Json::Value  root;
         reader.parse(info_str, root);
-        userinfo->uid   = root["uid"].asInt();
-        userinfo->name  = root["name"].asString();
-        userinfo->pwd   = root["pwd"].asString();
-        userinfo->email = root["email"].asString();
-        userinfo->nick  = root["nick"].asString();
-        userinfo->desc  = root["desc"].asString();
-        userinfo->sex   = root["sex"].asInt();
-        userinfo->icon  = root["icon"].asString();
+        userinfo->uid_   = root["uid"].asInt();
+        userinfo->name_  = root["name"].asString();
+        userinfo->pwd_   = root["pwd"].asString();
+        userinfo->email_ = root["email"].asString();
+        userinfo->nick_  = root["nick"].asString();
+        userinfo->desc_  = root["desc"].asString();
+        userinfo->sex_   = root["sex"].asInt();
+        userinfo->icon_  = root["icon"].asString();
         LOG_INFO("Redis get user info, uid: {}, name, {}, pwd: {}, email: {}, "
-                 "nick: {}, desc: {}, sex: {}, icon: {}",uid,
-            userinfo->name, userinfo->pwd, userinfo->email, userinfo->nick,
-            userinfo->desc, userinfo->sex, userinfo->icon);
+                 "nick: {}, desc: {}, sex: {}, icon: {}",
+                 uid, userinfo->name_, userinfo->pwd_, userinfo->email_,
+                 userinfo->nick_, userinfo->desc_, userinfo->sex_, userinfo->icon_);
     }
     else
     {
@@ -172,21 +183,22 @@ bool ChatServiceImpl::GetBaseInfo(
 
         LOG_INFO("Mysql get user info, uid: {}, name: {}, pwd: {}, "
                  "email: {}, nick: {}, desc: {}, sex: {}, icon: {}",
-            uid, user_info->name, user_info->pwd, user_info->email,
-            user_info->nick, user_info->desc, user_info->sex,user_info->icon);
+                 uid, user_info->name_, user_info->pwd_, user_info->email_,
+                 user_info->nick_, user_info->desc_, user_info->sex_,
+                 user_info->icon_);
 
         userinfo = user_info;
 
         // 将数据库内容写入redis缓存
         Json::Value redis_root;
         redis_root["uid"]   = uid;
-        redis_root["pwd"]   = userinfo->pwd;
-        redis_root["name"]  = userinfo->name;
-        redis_root["email"] = userinfo->email;
-        redis_root["nick"]  = userinfo->nick;
-        redis_root["desc"]  = userinfo->desc;
-        redis_root["sex"]   = userinfo->sex;
-        redis_root["icon"]  = userinfo->icon;
+        redis_root["pwd"]   = userinfo->pwd_;
+        redis_root["name"]  = userinfo->name_;
+        redis_root["email"] = userinfo->email_;
+        redis_root["nick"]  = userinfo->nick_;
+        redis_root["desc"]  = userinfo->desc_;
+        redis_root["sex"]   = userinfo->sex_;
+        redis_root["icon"]  = userinfo->icon_;
         RedisMgr::GetInstance()->Set(base_key, redis_root.toStyledString());
     }
 
@@ -216,12 +228,12 @@ Status ChatServiceImpl::NotifyKickUser(::grpc::ServerContext* context,
     session->NotifyOffline(uid);
     LOG_INFO("NotifyTextChatMsg session send finish, uid: {}", uid);
     // 清除旧的连接
-    _p_server->CleanSession(session->GetSessionId());
+    server_->CleanSession(session->GetSessionId());
 
     return Status::OK;
 }
 
-void ChatServiceImpl::RegisterServer(std::shared_ptr<CServer> pServer)
+void ChatServiceImpl::RegisterServer(std::shared_ptr<ChatServer> pServer)
 {
-    _p_server = pServer;
+    server_ = pServer;
 }

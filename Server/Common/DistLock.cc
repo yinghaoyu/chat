@@ -1,14 +1,13 @@
 #include "DistLock.h"
 
-#include <thread>
-#include <string>
-#include <chrono>
-#include <thread>
-#include <cstdlib>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <chrono>
+#include <cstdlib>
 #include <hiredis/hiredis.h>
+#include <string>
+#include <thread>
 
 // 定义单例模式
 DistLock& DistLock::Inst()

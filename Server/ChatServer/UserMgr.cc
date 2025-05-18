@@ -1,10 +1,10 @@
 #include "UserMgr.h"
-#include "CSession.h"
 #include "Logger.h"
+#include "Session.h"
 
 UserMgr::~UserMgr() { sessions_.clear(); }
 
-std::shared_ptr<CSession> UserMgr::GetSession(int uid)
+std::shared_ptr<Session> UserMgr::GetSession(int uid)
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
@@ -18,7 +18,7 @@ std::shared_ptr<CSession> UserMgr::GetSession(int uid)
     return iter->second;
 }
 
-void UserMgr::SetUserSession(int uid, std::shared_ptr<CSession> session)
+void UserMgr::SetUserSession(int uid, std::shared_ptr<Session> session)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     sessions_[uid] = session;
@@ -39,7 +39,9 @@ void UserMgr::RmvUserSession(int uid, std::string session_id)
     // 不相等说明是其他地方登录了
     if (session_id_ != session_id)
     {
-        LOG_ERROR("session removed failure, uid: {}, old_session: {}, new_session: {}", uid, session_id, session_id_);
+        LOG_ERROR("session removed failure, uid: {}, old_session: {}, "
+                  "new_session: {}",
+                  uid, session_id, session_id_);
         return;
     }
     sessions_.erase(uid);

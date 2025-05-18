@@ -1,10 +1,10 @@
 #include "GateServer.h"
-#include "HttpConnection.h"
 #include "AsioIOServicePool.h"
+#include "HttpConnection.h"
 #include "Logger.h"
 
 GateServer::GateServer(boost::asio::io_context& ioc, unsigned short& port)
-    : m_ioc(ioc), m_acceptor(ioc, tcp::endpoint(tcp::v4(), port))
+    : ioc_(ioc), acceptor_(ioc, tcp::endpoint(tcp::v4(), port))
 {}
 
 void GateServer::Start()
@@ -14,8 +14,8 @@ void GateServer::Start()
 
     std::shared_ptr<HttpConnection> new_con =
         std::make_shared<HttpConnection>(io_context);
-        
-    m_acceptor.async_accept(
+
+    acceptor_.async_accept(
         new_con->GetSocket(), [self, new_con](beast::error_code ec) {
             try
             {

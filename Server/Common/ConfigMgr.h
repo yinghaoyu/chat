@@ -1,7 +1,7 @@
 #pragma once
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/ini_parser.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/property_tree/ini_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
 #include <map>
 
 struct SectionInfo
@@ -22,8 +22,7 @@ struct SectionInfo
         return *this;
     }
 
-    std::map<std::string, std::string> _section_datas;
-    std::string                        operator[](const std::string& key)
+    std::string operator[](const std::string& key)
     {
         if (_section_datas.find(key) == _section_datas.end())
         {
@@ -42,19 +41,21 @@ struct SectionInfo
         // 这里可以添加一些边界检查
         return _section_datas[key];
     }
+
+    std::map<std::string, std::string> _section_datas;
 };
 
 class ConfigMgr
 {
   public:
-    ~ConfigMgr() { _config_map.clear(); }
+    ~ConfigMgr() { config_map_.clear(); }
     SectionInfo operator[](const std::string& section)
     {
-        if (_config_map.find(section) == _config_map.end())
+        if (config_map_.find(section) == config_map_.end())
         {
             return SectionInfo();
         }
-        return _config_map[section];
+        return config_map_[section];
     }
 
     ConfigMgr& operator=(const ConfigMgr& src)
@@ -64,11 +65,11 @@ class ConfigMgr
             return *this;
         }
 
-        this->_config_map = src._config_map;
+        this->config_map_ = src.config_map_;
         return *this;
     };
 
-    ConfigMgr(const ConfigMgr& src) { this->_config_map = src._config_map; }
+    ConfigMgr(const ConfigMgr& src) { this->config_map_ = src.config_map_; }
 
     static ConfigMgr& Inst()
     {
@@ -81,5 +82,5 @@ class ConfigMgr
   private:
     ConfigMgr();
     // 存储section和key-value对的map
-    std::map<std::string, SectionInfo> _config_map;
+    std::map<std::string, SectionInfo> config_map_;
 };

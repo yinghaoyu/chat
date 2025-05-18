@@ -1,31 +1,31 @@
 #include "LogicSystem.h"
+#include "ChatGrpcClient.h"
+#include "ChatServer.h"
+#include "ConfigMgr.h"
+#include "Logger.h"
 #include "MysqlMgr.h"
-#include "const.h"
 #include "RedisMgr.h"
 #include "UserMgr.h"
-#include "ChatGrpcClient.h"
-#include "CServer.h"
-#include "Logger.h"
-#include "ConfigMgr.h"
+#include "const.h"
 
 #include <string>
 
 using namespace std;
 
-LogicSystem::LogicSystem() : _b_stop(false), _p_server(nullptr)
+LogicSystem::LogicSystem() : stopped_(false), server_(nullptr)
 {
     RegisterCallBacks();
     for (int i = 0; i < 4; ++i)
     {
-        _worker_threads.emplace_back(&LogicSystem::DealMsg, this);
+        threads_.emplace_back(&LogicSystem::DealMsg, this);
     }
 }
 
 void LogicSystem::Shutdown()
 {
-    _b_stop = true;
-    _consume.notify_all();
-    for (auto& t : _worker_threads)
+    stopped_ = true;
+    consume_.notify_all();
+    for (auto& t : threads_)
     {
         if (t.joinable())
         {
@@ -36,18 +36,18 @@ void LogicSystem::Shutdown()
 
 void LogicSystem::PostMsgToQue(shared_ptr<LogicNode> msg)
 {
-    std::unique_lock<std::mutex> lock(_mutex);
-    if (_b_stop)
+    std::unique_lock<std::mutex> lock(mutex_);
+    if (stopped_)
     {
         return;
     }
-    _msg_que.emplace_back(msg);
-    _consume.notify_one();
+    msg_que_.emplace_back(msg);
+    consume_.notify_one();
 }
 
-void LogicSystem::SetServer(std::shared_ptr<CServer> pserver)
+void LogicSystem::SetServer(std::shared_ptr<ChatServer> pserver)
 {
-    _p_server = pserver;
+    server_ = pserver;
 }
 
 void LogicSystem::DealMsg()
@@ -57,72 +57,73 @@ void LogicSystem::DealMsg()
         std::vector<std::shared_ptr<LogicNode>> msgs;
 
         {
-            std::unique_lock<std::mutex> lock(_mutex);
+            std::unique_lock<std::mutex> lock(mutex_);
 
-            _consume.wait(
-                lock, [this] { return !_msg_que.empty() || _b_stop; });
+            consume_.wait(
+                lock, [this] { return !msg_que_.empty() || stopped_; });
 
-            if (_b_stop && _msg_que.empty())
+            if (stopped_ && msg_que_.empty())
             {
                 break;
             }
 
-            std::swap(msgs, _msg_que);
+            std::swap(msgs, msg_que_);
         }
 
         for (auto& msg_node : msgs)
         {
-            LOG_INFO("handle msg, id:{}", msg_node->_recvnode->_msg_id);
+            LOG_INFO("handle msg, id:{}", msg_node->recv_node_->msg_id_);
             auto call_back_iter =
-                _fun_callbacks.find(msg_node->_recvnode->_msg_id);
-            if (call_back_iter == _fun_callbacks.end())
+                fun_callbacks_.find(msg_node->recv_node_->msg_id_);
+            if (call_back_iter == fun_callbacks_.end())
             {
-                LOG_ERROR("handle msg, handler not found, msg id:{}", msg_node->_recvnode->_msg_id);
+                LOG_ERROR("handle msg, handler not found, msg id:{}",
+                          msg_node->recv_node_->msg_id_);
                 continue;
             }
-            call_back_iter->second(msg_node->_session,
-                msg_node->_recvnode->_msg_id,
-                std::string(
-                    msg_node->_recvnode->_data, msg_node->_recvnode->_cur_len));
+            call_back_iter->second(msg_node->session_,
+                msg_node->recv_node_->msg_id_,
+                std::string(msg_node->recv_node_->data_,
+                    msg_node->recv_node_->cur_len_));
         }
     }
 }
 
 void LogicSystem::RegisterCallBacks()
 {
-    _fun_callbacks[MSG_CHAT_LOGIN] = std::bind(&LogicSystem::LoginHandler,
+    fun_callbacks_[MSG_CHAT_LOGIN] = std::bind(&LogicSystem::LoginHandler,
         this,
         placeholders::_1,
         placeholders::_2,
         placeholders::_3);
 
-    _fun_callbacks[ID_SEARCH_USER_REQ] = std::bind(&LogicSystem::SearchInfo,
+    fun_callbacks_[ID_SEARCH_USER_REQ] = std::bind(&LogicSystem::SearchInfo,
         this,
         placeholders::_1,
         placeholders::_2,
         placeholders::_3);
 
-    _fun_callbacks[ID_ADD_FRIEND_REQ] = std::bind(&LogicSystem::AddFriendApply,
+    fun_callbacks_[ID_ADD_FRIEND_REQ] = std::bind(&LogicSystem::AddFriendApply,
         this,
         placeholders::_1,
         placeholders::_2,
         placeholders::_3);
 
-    _fun_callbacks[ID_AUTH_FRIEND_REQ] =
+    fun_callbacks_[ID_AUTH_FRIEND_REQ] =
         std::bind(&LogicSystem::AuthFriendApply,
             this,
             placeholders::_1,
             placeholders::_2,
             placeholders::_3);
 
-    _fun_callbacks[ID_TEXT_CHAT_MSG_REQ] =
+    fun_callbacks_[ID_TEXT_CHAT_MSG_REQ] =
         std::bind(&LogicSystem::DealChatTextMsg,
             this,
             placeholders::_1,
             placeholders::_2,
             placeholders::_3);
 
-    _fun_callbacks[ID_HEART_BEAT_REQ] =
+    fun_callbacks_[ID_HEART_BEAT_REQ] =
         std::bind(&LogicSystem::HeartBeatHandler,
             this,
             placeholders::_1,
@@ -131,7 +132,7 @@ void LogicSystem::RegisterCallBacks()
 }
 
 void LogicSystem::LoginHandler(
-    shared_ptr<CSession> session, const short& msg_id, const string& msg_data)
+    SessionPtr session, const short& msg_id, const string& msg_data)
 {
     Json::Reader reader;
     Json::Value  root;
@@ -160,7 +161,9 @@ void LogicSystem::LoginHandler(
 
     if (token_value != token)
     {
-        LOG_INFO("LoginHandler user token not match, uid: {}, token: {}, real token: {}", uid, token, token_value);
+        LOG_INFO("LoginHandler user token not match, uid: {}, token: {}, real "
+                 "token: {}",
+                 uid, token, token_value);
         rtvalue["error"] = ErrorCodes::TokenInvalid;
         return;
     }
@@ -172,18 +175,19 @@ void LogicSystem::LoginHandler(
     bool        b_base    = GetBaseInfo(base_key, uid, user_info);
     if (!b_base)
     {
-        LOG_INFO("LoginHandler user not exists, uid: {}, token: {}", uid, token);
+        LOG_INFO("LoginHandler user not exists, uid: {}, token: {}", uid,
+                 token);
         rtvalue["error"] = ErrorCodes::UidInvalid;
         return;
     }
     rtvalue["uid"]   = uid;
-    rtvalue["pwd"]   = user_info->pwd;
-    rtvalue["name"]  = user_info->name;
-    rtvalue["email"] = user_info->email;
-    rtvalue["nick"]  = user_info->nick;
-    rtvalue["desc"]  = user_info->desc;
-    rtvalue["sex"]   = user_info->sex;
-    rtvalue["icon"]  = user_info->icon;
+    rtvalue["pwd"]   = user_info->pwd_;
+    rtvalue["name"]  = user_info->name_;
+    rtvalue["email"] = user_info->email_;
+    rtvalue["nick"]  = user_info->nick_;
+    rtvalue["desc"]  = user_info->desc_;
+    rtvalue["sex"]   = user_info->sex_;
+    rtvalue["icon"]  = user_info->icon_;
 
     // 从数据库获取申请列表
     std::vector<std::shared_ptr<ApplyInfo>> apply_list;
@@ -195,13 +199,13 @@ void LogicSystem::LoginHandler(
         for (auto& apply : apply_list)
         {
             Json::Value obj;
-            obj["name"]   = apply->_name;
-            obj["uid"]    = apply->_uid;
-            obj["icon"]   = apply->_icon;
-            obj["nick"]   = apply->_nick;
-            obj["sex"]    = apply->_sex;
-            obj["desc"]   = apply->_desc;
-            obj["status"] = apply->_status;
+            obj["name"]   = apply->name_;
+            obj["uid"]    = apply->uid_;
+            obj["icon"]   = apply->icon_;
+            obj["nick"]   = apply->nick_;
+            obj["sex"]    = apply->sex_;
+            obj["desc"]   = apply->desc_;
+            obj["status"] = apply->status_;
             rtvalue["apply_list"].append(obj);
         }
     }
@@ -212,13 +216,13 @@ void LogicSystem::LoginHandler(
     for (auto& friend_ele : friend_list)
     {
         Json::Value obj;
-        obj["name"] = friend_ele->name;
-        obj["uid"]  = friend_ele->uid;
-        obj["icon"] = friend_ele->icon;
-        obj["nick"] = friend_ele->nick;
-        obj["sex"]  = friend_ele->sex;
-        obj["desc"] = friend_ele->desc;
-        obj["back"] = friend_ele->back;
+        obj["name"] = friend_ele->name_;
+        obj["uid"]  = friend_ele->uid_;
+        obj["icon"] = friend_ele->icon_;
+        obj["nick"] = friend_ele->nick_;
+        obj["sex"]  = friend_ele->sex_;
+        obj["desc"] = friend_ele->desc_;
+        obj["back"] = friend_ele->back_;
         rtvalue["friend_list"].append(obj);
     }
 
@@ -241,30 +245,37 @@ void LogicSystem::LoginHandler(
         // 说明用户已经登录了，此处应该踢掉之前的用户登录状态
         if (b_ip)
         {
-            LOG_INFO("LoginHandler user already login, uid: {}, ip: {}", uid, uid_ip_value);
+            LOG_INFO("LoginHandler user already login, uid: {}, ip: {}", uid,
+                     uid_ip_value);
             // 获取当前服务器ip信息
             auto& cfg       = ConfigMgr::Inst();
             auto  self_name = cfg["SelfServer"]["Name"];
             // 如果之前登录的服务器和当前相同，则直接在本服务器踢掉
             if (uid_ip_value == self_name)
             {
-                LOG_INFO("LoginHandler user already login in same server, uid: {}, lastip: {}", uid_ip_value);
+                LOG_INFO("LoginHandler user already login in same server, uid: "
+                         "{}, lastip: {}",
+                         uid_ip_value);
                 // 查找旧有的连接
                 auto old_session = UserMgr::GetInstance()->GetSession(uid);
 
                 // 此处应该发送踢人消息
                 if (old_session)
                 {
-                    LOG_INFO("LoginHandler user already login in same server, uid: {}, old_session: {}", uid, old_session->GetSessionId());
+                    LOG_INFO("LoginHandler user already login in same server, "
+                             "uid: {}, old_session: {}",
+                             uid, old_session->GetSessionId());
                     old_session->NotifyOffline(uid);
                     // 清除旧的连接
-                    _p_server->CleanSession(old_session->GetSessionId());
+                    server_->CleanSession(old_session->GetSessionId());
                 }
             }
             else
             {
                 // 如果不是本服务器，则通知grpc通知其他服务器踢掉
-                LOG_INFO("LoginHandler user already login in other server, uid: {}, lastip: {}", uid, uid_ip_value);
+                LOG_INFO("LoginHandler user already login in other server, "
+                         "uid: {}, lastip: {}",
+                         uid, uid_ip_value);
                 KickUserReq kick_req;
                 kick_req.set_uid(uid);
                 ChatGrpcClient::GetInstance()->NotifyKickUser(
@@ -286,8 +297,8 @@ void LogicSystem::LoginHandler(
     return;
 }
 
-void LogicSystem::SearchInfo(std::shared_ptr<CSession> session,
-    const short& msg_id, const string& msg_data)
+void LogicSystem::SearchInfo(
+    SessionPtr session, const short& msg_id, const string& msg_data)
 {
     Json::Reader reader;
     Json::Value  root;
@@ -314,8 +325,8 @@ void LogicSystem::SearchInfo(std::shared_ptr<CSession> session,
     return;
 }
 
-void LogicSystem::AddFriendApply(std::shared_ptr<CSession> session,
-    const short& msg_id, const string& msg_data)
+void LogicSystem::AddFriendApply(
+    SessionPtr session, const short& msg_id, const string& msg_data)
 {
     Json::Reader reader;
     Json::Value  root;
@@ -325,7 +336,9 @@ void LogicSystem::AddFriendApply(std::shared_ptr<CSession> session,
     auto bakname   = root["bakname"].asString();
     auto touid     = root["touid"].asInt();
 
-    LOG_INFO("user add friend apply, uid: {}, applyname: {}, touid: {}, bakname: {}", uid, applyname, touid, bakname);
+    LOG_INFO(
+        "user add friend apply, uid: {}, applyname: {}, touid: {}, bakname: {}",
+        uid, applyname, touid, bakname);
 
     Json::Value rtvalue;
     rtvalue["error"] = ErrorCodes::Success;
@@ -344,7 +357,8 @@ void LogicSystem::AddFriendApply(std::shared_ptr<CSession> session,
     bool        b_ip = RedisMgr::GetInstance()->Get(to_ip_key, to_ip_value);
     if (!b_ip)
     {
-        LOG_INFO("user add friend apply, touid not login, uid: {}, touid: {}", uid, touid);
+        LOG_INFO("user add friend apply, touid not login, uid: {}, touid: {}",
+                 uid, touid);
         return;
     }
 
@@ -361,7 +375,9 @@ void LogicSystem::AddFriendApply(std::shared_ptr<CSession> session,
         auto session = UserMgr::GetInstance()->GetSession(touid);
         if (session)
         {
-            LOG_INFO("user add friend apply, touid at same chat server, uid: {}, touid: {}", uid, touid);
+            LOG_INFO("user add friend apply, touid at same chat server, uid: "
+                     "{}, touid: {}",
+                     uid, touid);
             // 在内存中则直接发送通知对方
             Json::Value notify;
             notify["error"]    = ErrorCodes::Success;
@@ -370,9 +386,9 @@ void LogicSystem::AddFriendApply(std::shared_ptr<CSession> session,
             notify["desc"]     = "";
             if (b_info)
             {
-                notify["icon"] = apply_info->icon;
-                notify["sex"]  = apply_info->sex;
-                notify["nick"] = apply_info->nick;
+                notify["icon"] = apply_info->icon_;
+                notify["sex"]  = apply_info->sex_;
+                notify["nick"] = apply_info->nick_;
             }
             std::string return_str = notify.toStyledString();
             session->Send(return_str, ID_NOTIFY_ADD_FRIEND_REQ);
@@ -381,7 +397,9 @@ void LogicSystem::AddFriendApply(std::shared_ptr<CSession> session,
         return;
     }
 
-    LOG_INFO("user add friend apply, touid at other chat server, uid: {}, touid: {}", uid, touid);
+    LOG_INFO(
+        "user add friend apply, touid at other chat server, uid: {}, touid: {}",
+        uid, touid);
 
     AddFriendReq add_req;
     add_req.set_applyuid(uid);
@@ -390,17 +408,17 @@ void LogicSystem::AddFriendApply(std::shared_ptr<CSession> session,
     add_req.set_desc("");
     if (b_info)
     {
-        add_req.set_icon(apply_info->icon);
-        add_req.set_sex(apply_info->sex);
-        add_req.set_nick(apply_info->nick);
+        add_req.set_icon(apply_info->icon_);
+        add_req.set_sex(apply_info->sex_);
+        add_req.set_nick(apply_info->nick_);
     }
 
     // 发送通知
     ChatGrpcClient::GetInstance()->NotifyAddFriend(to_ip_value, add_req);
 }
 
-void LogicSystem::AuthFriendApply(std::shared_ptr<CSession> session,
-    const short& msg_id, const string& msg_data)
+void LogicSystem::AuthFriendApply(
+    SessionPtr session, const short& msg_id, const string& msg_data)
 {
 
     Json::Reader reader;
@@ -411,7 +429,8 @@ void LogicSystem::AuthFriendApply(std::shared_ptr<CSession> session,
     auto touid     = root["touid"].asInt();
     auto back_name = root["back"].asString();
 
-    LOG_INFO("user auth friend apply, uid: {}, touid: {}, back_name: {}", uid, touid, back_name);
+    LOG_INFO("user auth friend apply, uid: {}, touid: {}, back_name: {}", uid,
+             touid, back_name);
 
     Json::Value rtvalue;
     rtvalue["error"] = ErrorCodes::Success;
@@ -421,10 +440,10 @@ void LogicSystem::AuthFriendApply(std::shared_ptr<CSession> session,
     bool        b_info   = GetBaseInfo(base_key, touid, user_info);
     if (b_info)
     {
-        rtvalue["name"] = user_info->name;
-        rtvalue["nick"] = user_info->nick;
-        rtvalue["icon"] = user_info->icon;
-        rtvalue["sex"]  = user_info->sex;
+        rtvalue["name"] = user_info->name_;
+        rtvalue["nick"] = user_info->nick_;
+        rtvalue["icon"] = user_info->icon_;
+        rtvalue["sex"]  = user_info->sex_;
         rtvalue["uid"]  = touid;
     }
     else
@@ -450,7 +469,8 @@ void LogicSystem::AuthFriendApply(std::shared_ptr<CSession> session,
     bool        b_ip = RedisMgr::GetInstance()->Get(to_ip_key, to_ip_value);
     if (!b_ip)
     {
-        LOG_INFO("user auth friend apply, touid not login, uid: {}, touid: {}", uid, touid);
+        LOG_INFO("user auth friend apply, touid not login, uid: {}, touid: {}",
+                 uid, touid);
         return;
     }
 
@@ -462,7 +482,9 @@ void LogicSystem::AuthFriendApply(std::shared_ptr<CSession> session,
         auto session = UserMgr::GetInstance()->GetSession(touid);
         if (session)
         {
-            LOG_INFO("user auth friend apply, touid at same chat server, uid: {}, touid: {}", uid, touid);
+            LOG_INFO("user auth friend apply, touid at same chat server, uid: "
+                     "{}, touid: {}",
+                     uid, touid);
             // 在内存中则直接发送通知对方
             Json::Value notify;
             notify["error"]       = ErrorCodes::Success;
@@ -473,10 +495,10 @@ void LogicSystem::AuthFriendApply(std::shared_ptr<CSession> session,
             bool        b_info    = GetBaseInfo(base_key, uid, user_info);
             if (b_info)
             {
-                notify["name"] = user_info->name;
-                notify["nick"] = user_info->nick;
-                notify["icon"] = user_info->icon;
-                notify["sex"]  = user_info->sex;
+                notify["name"] = user_info->name_;
+                notify["nick"] = user_info->nick_;
+                notify["icon"] = user_info->icon_;
+                notify["sex"]  = user_info->sex_;
             }
             else
             {
@@ -490,7 +512,9 @@ void LogicSystem::AuthFriendApply(std::shared_ptr<CSession> session,
         return;
     }
 
-    LOG_INFO("user auth friend apply, touid at other chat server, uid: {}, touid: {}", uid, touid);
+    LOG_INFO("user auth friend apply, touid at other chat server, uid: {}, "
+             "touid: {}",
+             uid, touid);
     AuthFriendReq auth_req;
     auth_req.set_fromuid(uid);
     auth_req.set_touid(touid);
@@ -499,8 +523,8 @@ void LogicSystem::AuthFriendApply(std::shared_ptr<CSession> session,
     ChatGrpcClient::GetInstance()->NotifyAuthFriend(to_ip_value, auth_req);
 }
 
-void LogicSystem::DealChatTextMsg(std::shared_ptr<CSession> session,
-    const short& msg_id, const string& msg_data)
+void LogicSystem::DealChatTextMsg(
+    SessionPtr session, const short& msg_id, const string& msg_data)
 {
     Json::Reader reader;
     Json::Value  root;
@@ -529,7 +553,8 @@ void LogicSystem::DealChatTextMsg(std::shared_ptr<CSession> session,
     bool        b_ip = RedisMgr::GetInstance()->Get(to_ip_key, to_ip_value);
     if (!b_ip)
     {
-        LOG_INFO("user text chat msg, touid not login, fromuid: {}, touid: {}", uid, touid);
+        LOG_INFO("user text chat msg, touid not login, fromuid: {}, touid: {}",
+                 uid, touid);
         return;
     }
 
@@ -541,7 +566,9 @@ void LogicSystem::DealChatTextMsg(std::shared_ptr<CSession> session,
         auto peer = UserMgr::GetInstance()->GetSession(touid);
         if (peer)
         {
-            LOG_INFO("user send msg, touid at same chat server, fromuid: {}, touid: {}, session: {}, peer: {}", uid, touid, session->GetSessionId(), peer->GetSessionId());
+            LOG_INFO("user send msg, touid at same chat server, fromuid: {}, "
+                     "touid: {}, session: {}, peer: {}",
+                     uid, touid, session->GetSessionId(), peer->GetSessionId());
             // 在内存中则直接发送通知对方
             std::string msg = rtvalue.toStyledString();
             peer->Send(msg, ID_NOTIFY_TEXT_CHAT_MSG_REQ);
@@ -550,7 +577,9 @@ void LogicSystem::DealChatTextMsg(std::shared_ptr<CSession> session,
         return;
     }
 
-    LOG_INFO("user send msg, touid at other chat server, fromuid: {}, touid: {}", uid, touid);
+    LOG_INFO(
+        "user send msg, touid at other chat server, fromuid: {}, touid: {}",
+        uid, touid);
 
     TextChatMsgReq text_msg_req;
     text_msg_req.set_fromuid(uid);
@@ -572,8 +601,8 @@ void LogicSystem::DealChatTextMsg(std::shared_ptr<CSession> session,
         to_ip_value, text_msg_req, rtvalue);
 }
 
-void LogicSystem::HeartBeatHandler(std::shared_ptr<CSession> session,
-    const short& msg_id, const string& msg_data)
+void LogicSystem::HeartBeatHandler(
+    SessionPtr session, const short& msg_id, const string& msg_data)
 {
     Json::Reader reader;
     Json::Value  root;
@@ -621,9 +650,8 @@ void LogicSystem::GetUserByUid(std::string uid_str, Json::Value& rtvalue)
         auto icon  = root["icon"].asString();
 
         LOG_INFO("Redis get user info, uid: {}, name, {}, pwd: {}, email: {}, "
-                 "nick: {}, desc: {}, sex: {}, icon: {}", uid,
-            name, pwd, email, nick,
-            desc, sex, icon);
+                 "nick: {}, desc: {}, sex: {}, icon: {}",
+                 uid, name, pwd, email, nick, desc, sex, icon);
 
         rtvalue["uid"]   = uid;
         rtvalue["pwd"]   = pwd;
@@ -652,32 +680,32 @@ void LogicSystem::GetUserByUid(std::string uid_str, Json::Value& rtvalue)
     }
 
     LOG_INFO("Mysql get user info success, uid: {}, name: {}, pwd: {}, "
-                 "email: {}, nick: {}, desc: {}, sex: {}, icon: {}",
-            uid, user_info->name, user_info->pwd, user_info->email,
-            user_info->nick, user_info->desc, user_info->sex,user_info->icon);
+             "email: {}, nick: {}, desc: {}, sex: {}, icon: {}",
+             uid, user_info->name_, user_info->pwd_, user_info->email_,
+             user_info->nick_, user_info->desc_, user_info->sex_, user_info->icon_);
 
     // 将数据库内容写入redis缓存
     Json::Value redis_root;
-    redis_root["uid"]   = user_info->uid;
-    redis_root["pwd"]   = user_info->pwd;
-    redis_root["name"]  = user_info->name;
-    redis_root["email"] = user_info->email;
-    redis_root["nick"]  = user_info->nick;
-    redis_root["desc"]  = user_info->desc;
-    redis_root["sex"]   = user_info->sex;
-    redis_root["icon"]  = user_info->icon;
+    redis_root["uid"]   = user_info->uid_;
+    redis_root["pwd"]   = user_info->pwd_;
+    redis_root["name"]  = user_info->name_;
+    redis_root["email"] = user_info->email_;
+    redis_root["nick"]  = user_info->nick_;
+    redis_root["desc"]  = user_info->desc_;
+    redis_root["sex"]   = user_info->sex_;
+    redis_root["icon"]  = user_info->icon_;
 
     RedisMgr::GetInstance()->Set(base_key, redis_root.toStyledString());
 
     // 返回数据
-    rtvalue["uid"]   = user_info->uid;
-    rtvalue["pwd"]   = user_info->pwd;
-    rtvalue["name"]  = user_info->name;
-    rtvalue["email"] = user_info->email;
-    rtvalue["nick"]  = user_info->nick;
-    rtvalue["desc"]  = user_info->desc;
-    rtvalue["sex"]   = user_info->sex;
-    rtvalue["icon"]  = user_info->icon;
+    rtvalue["uid"]   = user_info->uid_;
+    rtvalue["pwd"]   = user_info->pwd_;
+    rtvalue["name"]  = user_info->name_;
+    rtvalue["email"] = user_info->email_;
+    rtvalue["nick"]  = user_info->nick_;
+    rtvalue["desc"]  = user_info->desc_;
+    rtvalue["sex"]   = user_info->sex_;
+    rtvalue["icon"]  = user_info->icon_;
 }
 
 void LogicSystem::GetUserByName(std::string name, Json::Value& rtvalue)
@@ -703,9 +731,8 @@ void LogicSystem::GetUserByName(std::string name, Json::Value& rtvalue)
         auto sex   = root["sex"].asInt();
 
         LOG_INFO("Redis get user info, uid: {}, name, {}, pwd: {}, email: {}, "
-                 "nick: {}, desc: {}, sex: {}", uid,
-            name, pwd, email, nick,
-            desc, sex);
+                 "nick: {}, desc: {}, sex: {}",
+                 uid, name, pwd, email, nick, desc, sex);
 
         rtvalue["uid"]   = uid;
         rtvalue["pwd"]   = pwd;
@@ -730,30 +757,30 @@ void LogicSystem::GetUserByName(std::string name, Json::Value& rtvalue)
     }
 
     LOG_INFO("Mysql get user info success, uid: {}, name: {}, pwd: {}, "
-                 "email: {}, nick: {}, desc: {}, sex: {}, icon: {}",
-            user_info->uid, user_info->name, user_info->pwd, user_info->email,
-            user_info->nick, user_info->desc, user_info->sex,user_info->icon);
+             "email: {}, nick: {}, desc: {}, sex: {}, icon: {}",
+             user_info->uid_, user_info->name_, user_info->pwd_, user_info->email_,
+             user_info->nick_, user_info->desc_, user_info->sex_, user_info->icon_);
 
     // 将数据库内容写入redis缓存
     Json::Value redis_root;
-    redis_root["uid"]   = user_info->uid;
-    redis_root["pwd"]   = user_info->pwd;
-    redis_root["name"]  = user_info->name;
-    redis_root["email"] = user_info->email;
-    redis_root["nick"]  = user_info->nick;
-    redis_root["desc"]  = user_info->desc;
-    redis_root["sex"]   = user_info->sex;
+    redis_root["uid"]   = user_info->uid_;
+    redis_root["pwd"]   = user_info->pwd_;
+    redis_root["name"]  = user_info->name_;
+    redis_root["email"] = user_info->email_;
+    redis_root["nick"]  = user_info->nick_;
+    redis_root["desc"]  = user_info->desc_;
+    redis_root["sex"]   = user_info->sex_;
 
     RedisMgr::GetInstance()->Set(base_key, redis_root.toStyledString());
 
     // 返回数据
-    rtvalue["uid"]   = user_info->uid;
-    rtvalue["pwd"]   = user_info->pwd;
-    rtvalue["name"]  = user_info->name;
-    rtvalue["email"] = user_info->email;
-    rtvalue["nick"]  = user_info->nick;
-    rtvalue["desc"]  = user_info->desc;
-    rtvalue["sex"]   = user_info->sex;
+    rtvalue["uid"]   = user_info->uid_;
+    rtvalue["pwd"]   = user_info->pwd_;
+    rtvalue["name"]  = user_info->name_;
+    rtvalue["email"] = user_info->email_;
+    rtvalue["nick"]  = user_info->nick_;
+    rtvalue["desc"]  = user_info->desc_;
+    rtvalue["sex"]   = user_info->sex_;
 }
 
 bool LogicSystem::GetBaseInfo(
@@ -767,20 +794,18 @@ bool LogicSystem::GetBaseInfo(
         Json::Reader reader;
         Json::Value  root;
         reader.parse(info_str, root);
-        userinfo->uid   = root["uid"].asInt();
-        userinfo->name  = root["name"].asString();
-        userinfo->pwd   = root["pwd"].asString();
-        userinfo->email = root["email"].asString();
-        userinfo->nick  = root["nick"].asString();
-        userinfo->desc  = root["desc"].asString();
-        userinfo->sex   = root["sex"].asInt();
-        userinfo->icon  = root["icon"].asString();
-        LOG_INFO("Redis get user info succeed, uid: {}, name: {}, pwd: {}, email: {}, icon: {}",
-            userinfo->uid,
-            userinfo->name,
-            userinfo->pwd,
-            userinfo->email,
-            userinfo->icon);
+        userinfo->uid_   = root["uid"].asInt();
+        userinfo->name_  = root["name"].asString();
+        userinfo->pwd_   = root["pwd"].asString();
+        userinfo->email_ = root["email"].asString();
+        userinfo->nick_  = root["nick"].asString();
+        userinfo->desc_  = root["desc"].asString();
+        userinfo->sex_   = root["sex"].asInt();
+        userinfo->icon_  = root["icon"].asString();
+        LOG_INFO("Redis get user info succeed, uid: {}, name: {}, pwd: {}, "
+                 "email: {}, icon: {}",
+                 userinfo->uid_, userinfo->name_, userinfo->pwd_, userinfo->email_,
+                 userinfo->icon_);
     }
     else
     {
@@ -794,25 +819,23 @@ bool LogicSystem::GetBaseInfo(
             return false;
         }
 
-        LOG_INFO("Mysql get user info succeed, uid: {}, name: {}, pwd: {}, email: {}, icon: {}",
-            user_info->uid,
-            user_info->name,
-            user_info->pwd,
-            user_info->email,
-            user_info->icon);
+        LOG_INFO("Mysql get user info succeed, uid: {}, name: {}, pwd: {}, "
+                 "email: {}, icon: {}",
+                 user_info->uid_, user_info->name_, user_info->pwd_,
+                 user_info->email_, user_info->icon_);
 
         userinfo = user_info;
 
         // 将数据库内容写入redis缓存
         Json::Value redis_root;
         redis_root["uid"]   = uid;
-        redis_root["pwd"]   = userinfo->pwd;
-        redis_root["name"]  = userinfo->name;
-        redis_root["email"] = userinfo->email;
-        redis_root["nick"]  = userinfo->nick;
-        redis_root["desc"]  = userinfo->desc;
-        redis_root["sex"]   = userinfo->sex;
-        redis_root["icon"]  = userinfo->icon;
+        redis_root["pwd"]   = userinfo->pwd_;
+        redis_root["name"]  = userinfo->name_;
+        redis_root["email"] = userinfo->email_;
+        redis_root["nick"]  = userinfo->nick_;
+        redis_root["desc"]  = userinfo->desc_;
+        redis_root["sex"]   = userinfo->sex_;
+        redis_root["icon"]  = userinfo->icon_;
         RedisMgr::GetInstance()->Set(base_key, redis_root.toStyledString());
     }
 

@@ -38,5 +38,5 @@ class RedisMgr : public Singleton<RedisMgr>,
 
   private:
     RedisMgr();
-    std::unique_ptr<RedisPool> _con_pool;
+    std::unique_ptr<RedisPool> con_pool_;
 };

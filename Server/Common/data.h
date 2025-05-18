@@ -3,45 +3,45 @@
 struct UserInfo
 {
     UserInfo()
-        : name(""),
-          pwd(""),
-          uid(0),
-          email(""),
-          nick(""),
-          desc(""),
-          sex(0),
-          icon(""),
-          back("")
+        : name_(""),
+          pwd_(""),
+          uid_(0),
+          email_(""),
+          nick_(""),
+          desc_(""),
+          sex_(0),
+          icon_(""),
+          back_("")
     {}
-    std::string name;
-    std::string pwd;
-    int         uid;
-    std::string email;
-    std::string nick;
-    std::string desc;
-    int         sex;
-    std::string icon;
-    std::string back;
+    std::string name_;
+    std::string pwd_;
+    int         uid_;
+    std::string email_;
+    std::string nick_;
+    std::string desc_;
+    int         sex_;
+    std::string icon_;
+    std::string back_;
 };
 
 struct ApplyInfo
 {
     ApplyInfo(int uid, std::string name, std::string desc, std::string icon,
         std::string nick, int sex, int status)
-        : _uid(uid),
-          _name(name),
-          _desc(desc),
-          _icon(icon),
-          _nick(nick),
-          _sex(sex),
-          _status(status)
+        : uid_(uid),
+          name_(name),
+          desc_(desc),
+          icon_(icon),
+          nick_(nick),
+          sex_(sex),
+          status_(status)
     {}
 
-    int         _uid;
-    std::string _name;
-    std::string _desc;
-    std::string _icon;
-    std::string _nick;
-    int         _sex;
-    int         _status;
+    int         uid_;
+    std::string name_;
+    std::string desc_;
+    std::string icon_;
+    std::string nick_;
+    int         sex_;
+    int         status_;
 };

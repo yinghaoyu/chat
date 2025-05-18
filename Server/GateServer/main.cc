@@ -1,8 +1,8 @@
-﻿#include "GateServer.h"
-#include "ConfigMgr.h"
+﻿#include "ConfigMgr.h"
+#include "GateServer.h"
+#include "Logger.h"
 #include "MysqlMgr.h"
 #include "RedisMgr.h"
-#include "Logger.h"
 
 int main()
 {
@@ -12,9 +12,9 @@ int main()
         MysqlMgr::GetInstance();
         RedisMgr::GetInstance();
 
-        auto&                   gCfgMgr       = ConfigMgr::Inst();
-        std::string             gate_port_str = gCfgMgr["GateServer"]["Port"];
-        unsigned short          gate_port     = stoi(gate_port_str);
+        auto&          gCfgMgr       = ConfigMgr::Inst();
+        std::string    gate_port_str = gCfgMgr["GateServer"]["Port"];
+        unsigned short gate_port     = stoi(gate_port_str);
 
         net::io_context         ioc{1};
         boost::asio::signal_set signals(ioc, SIGINT, SIGTERM);

@@ -1,76 +1,129 @@
-﻿#include "LogicSystem.h"
+#include "ChatServer.h"
 #include "AsioIOServicePool.h"
-#include "CServer.h"
+#include "Session.h"
 #include "ConfigMgr.h"
-#include "RedisMgr.h"
-#include "ChatServiceImpl.h"
-#include "const.h"
 #include "Logger.h"
+#include "RedisMgr.h"
+#include "UserMgr.h"
 
-#include <csignal>
-#include <thread>
+#include <memory>
+#include <vector>
 
-int main()
+ChatServer::ChatServer(boost::asio::io_context& io_context, short port)
+    : io_context_(io_context),
+      port_(port),
+      acceptor_(io_context, tcp::endpoint(tcp::v4(), port)),
+      timer_(io_context_)
+{}
+
+ChatServer::~ChatServer() { LOG_TRACE("Server dtor~"); }
+
+void ChatServer::HandleAccept(
+    shared_ptr<Session> new_session, const boost::system::error_code& error)
 {
-    auto& cfg         = ConfigMgr::Inst();
-    auto  server_name = cfg["SelfServer"]["Name"];
-    try
+    if (!error)
     {
-        auto pool = AsioIOServicePool::GetInstance();
-        // 将登录数设置为0
-        RedisMgr::GetInstance()->HSet(LOGIN_COUNT, server_name, "0");
+        new_session->Start();
 
-        Defer derfer([server_name]() {
-            RedisMgr::GetInstance()->HDel(LOGIN_COUNT, server_name);
-        });
+        lock_guard<mutex> lock(mutex_);
 
-        boost::asio::io_context io_context;
-
-        auto port_str = cfg["SelfServer"]["Port"];
-
-        auto cserver = std::make_shared<CServer>(io_context, stoi(port_str));
-
-        cserver->Start();
-
-        // 定义一个GrpcServer
-
-        std::string server_address(
-            cfg["SelfServer"]["Host"] + ":" + cfg["SelfServer"]["RPCPort"]);
-        ChatServiceImpl     service;
-        grpc::ServerBuilder builder;
-        // 监听端口和添加服务
-        builder.AddListeningPort(
-            server_address, grpc::InsecureServerCredentials());
-        builder.RegisterService(&service);
-        service.RegisterServer(cserver);
-        // 构建并启动gRPC服务器
-        std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
-        LOG_INFO("gRPC Server listening on {}", server_address);
-
-        // 单独启动一个线程处理grpc服务
-        std::thread grpc_server_thread([&server]() { server->Wait(); });
-
-        boost::asio::signal_set signals(io_context, SIGINT, SIGTERM);
-        signals.async_wait([&io_context, pool, &cserver, &server](auto, auto) {
-            LOG_INFO("Stopping server...");
-            // FIXME(yinghaoyu):
-            // 这里timer.cancel()与io_context.stop()在Windows和Linux表现不一样
-            // Windows先调用timer.cancel()，后调用io_context.stop()会产生dump
-            cserver->Shutdown();
-            io_context.stop();
-            pool->Stop();
-            server->Shutdown();
-            LogicSystem::GetInstance()->Shutdown();
-        });
-
-        // 将Cserver注册给逻辑类方便以后清除连接
-        LogicSystem::GetInstance()->SetServer(cserver);
-        io_context.run();
-
-        grpc_server_thread.join();
+        sessions_.emplace(new_session->GetSessionId(), new_session);
     }
-    catch (std::exception& e)
+    else
     {
-        LOG_ERROR("Exception: {}", e.what());
+        LOG_ERROR("session accept failed, error: {}", error.what());
     }
+
+    StartAccept();
+}
+
+void ChatServer::StartAccept()
+{
+    auto& io_context = AsioIOServicePool::GetInstance()->GetIOService();
+
+    auto new_session = std::make_shared<Session>(io_context, this);
+
+    acceptor_.async_accept(new_session->GetSocket(),
+        std::bind(
+            &ChatServer::HandleAccept, this, new_session, placeholders::_1));
+}
+
+// 根据session 的id删除session，并移除用户和session的关联
+void ChatServer::CleanSession(const std::string& session_id)
+{
+    lock_guard<mutex> lock(mutex_);
+    if (sessions_.count(session_id))
+    {
+        LOG_INFO("CleanSession session: {}", session_id);
+        auto uid = sessions_[session_id]->GetUserId();
+        // 移除用户和session的关联
+        UserMgr::GetInstance()->RmvUserSession(uid, session_id);
+    }
+
+    sessions_.erase(session_id);
+}
+
+bool ChatServer::CheckValid(const std::string& session_id)
+{
+    lock_guard<mutex> lock(mutex_);
+    return sessions_.count(session_id) == 1;
+}
+
+void ChatServer::on_timer(const boost::system::error_code& ec)
+{
+    std::vector<std::shared_ptr<Session>> expired_sessions;
+
+    int count = 0;
+
+    {
+        lock_guard<mutex> lock(mutex_);
+
+        time_t now = std::time(nullptr);
+
+        for (auto& session : sessions_)
+        {
+            bool expired = session.second->IsHeartbeatExpired(now);
+            if (expired)
+            {
+                // 关闭socket, 其实这里也会触发async_read的错误处理
+                session.second->Close();
+                expired_sessions.emplace_back(session.second);
+                continue;
+            }
+            count++;
+        }
+    }
+
+    // 设置session数量
+    auto& cfg       = ConfigMgr::Inst();
+    auto  self_name = cfg["SelfServer"]["Name"];
+    auto  count_str = std::to_string(count);
+    RedisMgr::GetInstance()->HSet(LOGIN_COUNT, self_name, count_str);
+
+    // 处理过期session, 单独提出，防止死锁
+    for (auto& session : expired_sessions)
+    {
+        session->DealExceptionSession();
+    }
+
+    start_timer();
+}
+
+void ChatServer::Start()
+{
+    LOG_INFO("Server start success, listen on port: {}", port_);
+    StartAccept();
+    start_timer();
+}
+
+void ChatServer::Shutdown() { timer_.cancel(); }
+
+void ChatServer::start_timer()
+{
+    timer_.expires_after(std::chrono::seconds(60));
+
+    auto self = shared_from_this();
+
+    timer_.async_wait(
+        [self](boost::system::error_code ec) { self->on_timer(ec); });
 }
