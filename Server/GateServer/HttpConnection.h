@@ -15,28 +15,32 @@ class HttpConnection : public std::enable_shared_from_this<HttpConnection>
 
   public:
     HttpConnection(boost::asio::io_context& ioc);
-    void         Start();
-    void         PreParseGetParam();
-    tcp::socket& GetSocket() { return _socket; }
+
+    void Start();
+    void PreParseGetParam();
+
+    tcp::socket& GetSocket() { return m_socket; }
+
+    void HandleGetRequest();
+    void HandlePostRequest();
+    void SendErrorResponse(http::status status, const std::string& message);
 
   private:
-    void        CheckDeadline();
-    void        WriteResponse();
-    void        HandleReq();
-    tcp::socket _socket;
-    // The buffer for performing reads.
-    beast::flat_buffer _buffer{8192};
+    void CheckDeadline();
+    void WriteResponse();
+    void HandleReq();
 
-    // The request message.
-    http::request<http::dynamic_body> _request;
+    tcp::socket m_socket;
 
-    // The response message.
-    http::response<http::dynamic_body> _response;
+    beast::flat_buffer m_buffer{8192};
 
-    // The timer for putting a deadline on connection processing.
-    net::steady_timer deadline_{
-        _socket.get_executor(), std::chrono::seconds(60)};
+    http::request<http::dynamic_body> m_request;
 
-    std::string                                  _get_url;
-    std::unordered_map<std::string, std::string> _get_params;
+    http::response<http::dynamic_body> m_response;
+
+    net::steady_timer m_deadline{
+        m_socket.get_executor(), std::chrono::seconds(60)};
+
+    std::string                                  m_url;
+    std::unordered_map<std::string, std::string> m_params;
 };

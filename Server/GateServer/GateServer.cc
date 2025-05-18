@@ -1,36 +1,40 @@
-﻿#include "CServer.h"
-#include "ConfigMgr.h"
-#include "MysqlMgr.h"
-#include "RedisMgr.h"
+#include "GateServer.h"
+#include "HttpConnection.h"
+#include "AsioIOServicePool.h"
 #include "Logger.h"
 
-int main()
+GateServer::GateServer(boost::asio::io_context& ioc, unsigned short& port)
+    : m_ioc(ioc), m_acceptor(ioc, tcp::endpoint(tcp::v4(), port))
+{}
+
+void GateServer::Start()
 {
-    try
-    {
-        Logger::GetInstance();
-        MysqlMgr::GetInstance();
-        RedisMgr::GetInstance();
-        auto&                   gCfgMgr       = ConfigMgr::Inst();
-        std::string             gate_port_str = gCfgMgr["GateServer"]["Port"];
-        unsigned short          gate_port     = atoi(gate_port_str.c_str());
-        net::io_context         ioc{1};
-        boost::asio::signal_set signals(ioc, SIGINT, SIGTERM);
-        signals.async_wait(
-            [&ioc](const boost::system::error_code& error, int signal_number) {
-                if (error)
+    auto  self       = shared_from_this();
+    auto& io_context = AsioIOServicePool::GetInstance()->GetIOService();
+
+    std::shared_ptr<HttpConnection> new_con =
+        std::make_shared<HttpConnection>(io_context);
+        
+    m_acceptor.async_accept(
+        new_con->GetSocket(), [self, new_con](beast::error_code ec) {
+            try
+            {
+                // 出错则放弃这个连接，继续监听新链接
+                if (ec)
                 {
+                    self->Start();
                     return;
                 }
-                ioc.stop();
-            });
-        std::make_shared<CServer>(ioc, gate_port)->Start();
-        LOG_INFO("GateServer is running on port {}", gate_port);
-        ioc.run();
-    }
-    catch (std::exception const& e)
-    {
-        LOG_ERROR("Exception: {}", e.what());
-        return EXIT_FAILURE;
-    }
+
+                // 处理新链接，创建HpptConnection类管理新连接
+                new_con->Start();
+                // 继续监听
+                self->Start();
+            }
+            catch (std::exception& exp)
+            {
+                LOG_ERROR("Exception: {}", exp.what());
+                self->Start();
+            }
+        });
 }

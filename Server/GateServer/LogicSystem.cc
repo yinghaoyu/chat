@@ -13,26 +13,26 @@
 LogicSystem::LogicSystem()
 {
     RegGet("/get_test", [](std::shared_ptr<HttpConnection> connection) {
-        beast::ostream(connection->_response.body())
+        beast::ostream(connection->m_response.body())
             << "receive get_test req " << std::endl;
         int i = 0;
-        for (auto& elem : connection->_get_params)
+        for (auto& elem : connection->m_params)
         {
             i++;
-            beast::ostream(connection->_response.body())
+            beast::ostream(connection->m_response.body())
                 << "param" << i << " key is " << elem.first;
-            beast::ostream(connection->_response.body())
+            beast::ostream(connection->m_response.body())
                 << ", " << " value is " << elem.second << std::endl;
         }
 
-        connection->_response.set(http::field::content_type, "text/plain");
+        connection->m_response.set(http::field::content_type, "text/plain");
     });
 
     RegPost("/get_varifycode", [](std::shared_ptr<HttpConnection> connection) {
         auto body_str =
-            boost::beast::buffers_to_string(connection->_request.body().data());
-        LOG_INFO("Request target:{} receive: {}", connection->_request.target(), body_str);
-        connection->_response.set(http::field::content_type, "text/json");
+            boost::beast::buffers_to_string(connection->m_request.body().data());
+        LOG_INFO("Request target:{} receive: {}", connection->m_request.target(), body_str);
+        connection->m_response.set(http::field::content_type, "text/json");
         Json::Value  root;
         Json::Reader reader;
         Json::Value  src_root;
@@ -42,7 +42,7 @@ LogicSystem::LogicSystem()
             LOG_ERROR("Failed to parse JSON data");
             root["error"]       = ErrorCodes::Error_Json;
             std::string jsonstr = root.toStyledString();
-            beast::ostream(connection->_response.body()) << jsonstr;
+            beast::ostream(connection->m_response.body()) << jsonstr;
             return true;
         }
 
@@ -51,7 +51,7 @@ LogicSystem::LogicSystem()
             LOG_ERROR("Failed to parse JSON data");
             root["error"]       = ErrorCodes::Error_Json;
             std::string jsonstr = root.toStyledString();
-            beast::ostream(connection->_response.body()) << jsonstr;
+            beast::ostream(connection->m_response.body()) << jsonstr;
             return true;
         }
 
@@ -62,15 +62,15 @@ LogicSystem::LogicSystem()
         root["error"]       = rsp.error();
         root["email"]       = src_root["email"];
         std::string jsonstr = root.toStyledString();
-        beast::ostream(connection->_response.body()) << jsonstr;
+        beast::ostream(connection->m_response.body()) << jsonstr;
         return true;
     });
 
     RegPost("/user_register", [](std::shared_ptr<HttpConnection> connection) {
         auto body_str =
-            boost::beast::buffers_to_string(connection->_request.body().data());
-        LOG_INFO("Request target:{} receive: {}", connection->_request.target(), body_str);
-        connection->_response.set(http::field::content_type, "text/json");
+            boost::beast::buffers_to_string(connection->m_request.body().data());
+        LOG_INFO("Request target:{} receive: {}", connection->m_request.target(), body_str);
+        connection->m_response.set(http::field::content_type, "text/json");
         Json::Value  root;
         Json::Reader reader;
         Json::Value  src_root;
@@ -80,7 +80,7 @@ LogicSystem::LogicSystem()
             LOG_ERROR("Failed to parse JSON data");
             root["error"]       = ErrorCodes::Error_Json;
             std::string jsonstr = root.toStyledString();
-            beast::ostream(connection->_response.body()) << jsonstr;
+            beast::ostream(connection->m_response.body()) << jsonstr;
             return true;
         }
 
@@ -95,7 +95,7 @@ LogicSystem::LogicSystem()
             LOG_ERROR("password not match");
             root["error"]       = ErrorCodes::PasswdErr;
             std::string jsonstr = root.toStyledString();
-            beast::ostream(connection->_response.body()) << jsonstr;
+            beast::ostream(connection->m_response.body()) << jsonstr;
             return true;
         }
 
@@ -108,7 +108,7 @@ LogicSystem::LogicSystem()
             LOG_INFO("get varify code expired");
             root["error"]       = ErrorCodes::VarifyExpired;
             std::string jsonstr = root.toStyledString();
-            beast::ostream(connection->_response.body()) << jsonstr;
+            beast::ostream(connection->m_response.body()) << jsonstr;
             return true;
         }
 
@@ -117,7 +117,7 @@ LogicSystem::LogicSystem()
             LOG_INFO("varify code error");
             root["error"]       = ErrorCodes::VarifyCodeErr;
             std::string jsonstr = root.toStyledString();
-            beast::ostream(connection->_response.body()) << jsonstr;
+            beast::ostream(connection->m_response.body()) << jsonstr;
             return true;
         }
 
@@ -128,7 +128,7 @@ LogicSystem::LogicSystem()
             LOG_INFO("user or email exist");
             root["error"]       = ErrorCodes::UserExist;
             std::string jsonstr = root.toStyledString();
-            beast::ostream(connection->_response.body()) << jsonstr;
+            beast::ostream(connection->m_response.body()) << jsonstr;
             return true;
         }
         root["error"]       = 0;
@@ -140,16 +140,16 @@ LogicSystem::LogicSystem()
         root["icon"]        = icon;
         root["varifycode"]  = src_root["varifycode"].asString();
         std::string jsonstr = root.toStyledString();
-        beast::ostream(connection->_response.body()) << jsonstr;
+        beast::ostream(connection->m_response.body()) << jsonstr;
         return true;
     });
 
     // 重置回调逻辑
     RegPost("/reset_pwd", [](std::shared_ptr<HttpConnection> connection) {
         auto body_str =
-            boost::beast::buffers_to_string(connection->_request.body().data());
-        LOG_INFO("Request target:{} receive: {}", connection->_request.target(), body_str);
-        connection->_response.set(http::field::content_type, "text/json");
+            boost::beast::buffers_to_string(connection->m_request.body().data());
+        LOG_INFO("Request target:{} receive: {}", connection->m_request.target(), body_str);
+        connection->m_response.set(http::field::content_type, "text/json");
         Json::Value  root;
         Json::Reader reader;
         Json::Value  src_root;
@@ -159,7 +159,7 @@ LogicSystem::LogicSystem()
             LOG_ERROR("Failed to parse JSON data");
             root["error"]       = ErrorCodes::Error_Json;
             std::string jsonstr = root.toStyledString();
-            beast::ostream(connection->_response.body()) << jsonstr;
+            beast::ostream(connection->m_response.body()) << jsonstr;
             return true;
         }
 
@@ -176,7 +176,7 @@ LogicSystem::LogicSystem()
             LOG_INFO("get varify code expired");
             root["error"]       = ErrorCodes::VarifyExpired;
             std::string jsonstr = root.toStyledString();
-            beast::ostream(connection->_response.body()) << jsonstr;
+            beast::ostream(connection->m_response.body()) << jsonstr;
             return true;
         }
 
@@ -185,7 +185,7 @@ LogicSystem::LogicSystem()
             LOG_INFO("varify code error");
             root["error"]       = ErrorCodes::VarifyCodeErr;
             std::string jsonstr = root.toStyledString();
-            beast::ostream(connection->_response.body()) << jsonstr;
+            beast::ostream(connection->m_response.body()) << jsonstr;
             return true;
         }
         // 查询数据库判断用户名和邮箱是否匹配
@@ -195,7 +195,7 @@ LogicSystem::LogicSystem()
             LOG_INFO("user email not match");
             root["error"]       = ErrorCodes::EmailNotMatch;
             std::string jsonstr = root.toStyledString();
-            beast::ostream(connection->_response.body()) << jsonstr;
+            beast::ostream(connection->m_response.body()) << jsonstr;
             return true;
         }
 
@@ -206,7 +206,7 @@ LogicSystem::LogicSystem()
             LOG_INFO("update password failed");
             root["error"]       = ErrorCodes::PasswdUpFailed;
             std::string jsonstr = root.toStyledString();
-            beast::ostream(connection->_response.body()) << jsonstr;
+            beast::ostream(connection->m_response.body()) << jsonstr;
             return true;
         }
         LOG_INFO("update password succeed");
@@ -216,16 +216,16 @@ LogicSystem::LogicSystem()
         root["passwd"]      = pwd;
         root["varifycode"]  = src_root["varifycode"].asString();
         std::string jsonstr = root.toStyledString();
-        beast::ostream(connection->_response.body()) << jsonstr;
+        beast::ostream(connection->m_response.body()) << jsonstr;
         return true;
     });
 
     // 用户登录逻辑
     RegPost("/user_login", [](std::shared_ptr<HttpConnection> connection) {
         auto body_str =
-            boost::beast::buffers_to_string(connection->_request.body().data());
-        LOG_INFO("Request target:{} receive: {}", connection->_request.target(), body_str);
-        connection->_response.set(http::field::content_type, "text/json");
+            boost::beast::buffers_to_string(connection->m_request.body().data());
+        LOG_INFO("Request target:{} receive: {}", connection->m_request.target(), body_str);
+        connection->m_response.set(http::field::content_type, "text/json");
         Json::Value  root;
         Json::Reader reader;
         Json::Value  src_root;
@@ -235,7 +235,7 @@ LogicSystem::LogicSystem()
             LOG_ERROR("Failed to parse JSON data");
             root["error"]       = ErrorCodes::Error_Json;
             std::string jsonstr = root.toStyledString();
-            beast::ostream(connection->_response.body()) << jsonstr;
+            beast::ostream(connection->m_response.body()) << jsonstr;
             return true;
         }
 
@@ -250,7 +250,7 @@ LogicSystem::LogicSystem()
             LOG_INFO("user email not match");
             root["error"]       = ErrorCodes::PasswdInvalid;
             std::string jsonstr = root.toStyledString();
-            beast::ostream(connection->_response.body()) << jsonstr;
+            beast::ostream(connection->m_response.body()) << jsonstr;
             return true;
         }
 
@@ -263,7 +263,7 @@ LogicSystem::LogicSystem()
             LOG_ERROR("get chat server failed error: {}", reply.error());
             root["error"]       = ErrorCodes::RPCFailed;
             std::string jsonstr = root.toStyledString();
-            beast::ostream(connection->_response.body()) << jsonstr;
+            beast::ostream(connection->m_response.body()) << jsonstr;
             return true;
         }
         LOG_INFO("gRPC get chat server success uid: {}", userInfo.uid);
@@ -275,43 +275,43 @@ LogicSystem::LogicSystem()
         root["host"]        = reply.host();
         root["port"]        = reply.port();
         std::string jsonstr = root.toStyledString();
-        beast::ostream(connection->_response.body()) << jsonstr;
+        beast::ostream(connection->m_response.body()) << jsonstr;
         return true;
     });
 }
 
-void LogicSystem::RegGet(std::string url, HttpHandler handler)
+void LogicSystem::RegGet(const std::string& url, HttpHandler handler)
 {
-    _get_handlers.insert(make_pair(url, handler));
+    m_get_handlers.insert(make_pair(url, handler));
 }
 
-void LogicSystem::RegPost(std::string url, HttpHandler handler)
+void LogicSystem::RegPost(const std::string& url, HttpHandler handler)
 {
-    _post_handlers.insert(make_pair(url, handler));
+    m_post_handlers.insert(make_pair(url, handler));
 }
 
 LogicSystem::~LogicSystem() {}
 
 bool LogicSystem::HandleGet(
-    std::string path, std::shared_ptr<HttpConnection> con)
+    const std::string& path, std::shared_ptr<HttpConnection> con)
 {
-    if (_get_handlers.find(path) == _get_handlers.end())
+    if (!m_get_handlers.count(path))
     {
         return false;
     }
 
-    _get_handlers[path](con);
+    m_get_handlers[path](con);
     return true;
 }
 
 bool LogicSystem::HandlePost(
-    std::string path, std::shared_ptr<HttpConnection> con)
+    const std::string& path, std::shared_ptr<HttpConnection> con)
 {
-    if (_post_handlers.find(path) == _post_handlers.end())
+    if (!m_post_handlers.count(path))
     {
         return false;
     }
 
-    _post_handlers[path](con);
+    m_post_handlers[path](con);
     return true;
 }
