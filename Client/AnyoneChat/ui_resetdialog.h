@@ -18,9 +18,9 @@
 #include <QtWidgets/QSpacerItem>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
-#include <flupasswordbox.h>
-#include <flutextbox.h>
 #include <timerbtn.h>
+#include "flupasswordbox.h"
+#include "flutextbox.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -29,7 +29,6 @@ class Ui_ResetDialog
 public:
     QVBoxLayout *verticalLayout;
     QSpacerItem *verticalSpacer;
-    QLabel *err_tip;
     QWidget *widget;
     QHBoxLayout *horizontalLayout;
     QLabel *user_lb;
@@ -64,14 +63,6 @@ public:
         verticalSpacer = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
 
         verticalLayout->addItem(verticalSpacer);
-
-        err_tip = new QLabel(ResetDialog);
-        err_tip->setObjectName(QString::fromUtf8("err_tip"));
-        err_tip->setMinimumSize(QSize(0, 25));
-        err_tip->setMaximumSize(QSize(16777215, 25));
-        err_tip->setAlignment(Qt::AlignCenter);
-
-        verticalLayout->addWidget(err_tip);
 
         widget = new QWidget(ResetDialog);
         widget->setObjectName(QString::fromUtf8("widget"));
@@ -202,7 +193,6 @@ public:
     void retranslateUi(QDialog *ResetDialog)
     {
         ResetDialog->setWindowTitle(QCoreApplication::translate("ResetDialog", "Dialog", nullptr));
-        err_tip->setText(QString());
         user_lb->setText(QCoreApplication::translate("ResetDialog", "\347\224\250\346\210\267\345\220\215\357\274\232", nullptr));
         email_lb->setText(QCoreApplication::translate("ResetDialog", "\351\202\256\347\256\261\357\274\232", nullptr));
         varify_lb->setText(QCoreApplication::translate("ResetDialog", "\351\252\214\350\257\201\347\240\201\357\274\232", nullptr));

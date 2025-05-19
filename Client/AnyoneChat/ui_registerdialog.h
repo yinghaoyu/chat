@@ -15,7 +15,6 @@
 #include <QtWidgets/QDialog>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QLabel>
-#include <QtWidgets/QPushButton>
 #include <QtWidgets/QSpacerItem>
 #include <QtWidgets/QStackedWidget>
 #include <QtWidgets/QVBoxLayout>
@@ -68,7 +67,7 @@ public:
     QHBoxLayout *horizontalLayout_2;
     QSpacerItem *horizontalSpacer;
     QWidget *widget_3;
-    QPushButton *return_btn;
+    FluButton *return_btn;
     QSpacerItem *horizontalSpacer_2;
     QSpacerItem *verticalSpacer_4;
 
@@ -268,7 +267,7 @@ public:
 
         horizontalLayout_2->addWidget(widget_3);
 
-        return_btn = new QPushButton(widget_2);
+        return_btn = new FluButton(widget_2);
         return_btn->setObjectName(QString::fromUtf8("return_btn"));
         return_btn->setMinimumSize(QSize(0, 25));
         return_btn->setMaximumSize(QSize(16777215, 25));

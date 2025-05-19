@@ -28,28 +28,6 @@
     </spacer>
    </item>
    <item>
-    <widget class="QLabel" name="err_tip">
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>25</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>25</height>
-      </size>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignCenter</set>
-     </property>
-    </widget>
-   </item>
-   <item>
     <widget class="QWidget" name="widget" native="true">
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
@@ -314,6 +292,18 @@
    <class>TimerBtn</class>
    <extends>QPushButton</extends>
    <header location="global">timerbtn.h</header>
+  </customwidget>
+  <customwidget>
+   <class>FluTextBox</class>
+   <extends>QWidget</extends>
+   <header>flutextbox.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>FluPasswordBox</class>
+   <extends>QWidget</extends>
+   <header>flupasswordbox.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

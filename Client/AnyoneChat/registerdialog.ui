@@ -411,7 +411,7 @@
              <widget class="QWidget" name="widget_3" native="true"/>
             </item>
             <item>
-             <widget class="QPushButton" name="return_btn">
+             <widget class="FluButton" name="return_btn">
               <property name="minimumSize">
                <size>
                 <width>0</width>
