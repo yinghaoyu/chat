@@ -22,7 +22,7 @@ void HttpMgr::PostHttpReq(QUrl url, QJsonObject json, ReqId req_id, Modules mod)
         if(reply->error() != QNetworkReply::NoError){
             qDebug() << reply->errorString();
             //发送信号通知完成
-            emit self->sig_http_finish(req_id, "", ErrorCodes::ERR_NETWORK, mod);
+            emit self->sig_http_finish(req_id, "", ErrorCodes::Error_NetWork, mod);
             reply->deleteLater();
             return;
         }
@@ -31,7 +31,7 @@ void HttpMgr::PostHttpReq(QUrl url, QJsonObject json, ReqId req_id, Modules mod)
         QString res = reply->readAll();
 
         //发送信号通知完成
-        emit self->sig_http_finish(req_id, res, ErrorCodes::SUCCESS,mod);
+        emit self->sig_http_finish(req_id, res, ErrorCodes::Success,mod);
         reply->deleteLater();
         return;
     });

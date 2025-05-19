@@ -7,18 +7,6 @@ background-color:rgb(255,255,255)
    color:black;
 }
 
-#err_tip[state='normal']{
-   color: green;
-}
-
-#err_tip[state='err']{
-   color: red;
-}
-
-#tip_lb, #tip2_lb{
-    color:green;
-}
-
 #reg_label[state='normal'],#reg_label[state='selected']{
     color:black;
 }

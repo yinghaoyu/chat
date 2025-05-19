@@ -79,7 +79,7 @@ void ResetDialog::on_varify_btn_clicked()
 
 void ResetDialog::slot_reset_mod_finish(ReqId id, QString res, ErrorCodes err)
 {
-    if(err != ErrorCodes::SUCCESS){
+    if(err != ErrorCodes::Success){
         showTip(tr("网络请求错误"));
         enableOperation(true);
         return;
@@ -183,27 +183,56 @@ void ResetDialog::initHandlers()
     //注册获取验证码回包逻辑
     _handlers.insert(ReqId::ID_GET_VARIFY_CODE, [this](QJsonObject jsonObj){
         int error = jsonObj["error"].toInt();
-        if(error != ErrorCodes::SUCCESS){
-            showTip(tr("参数错误"));
-            return;
+        switch(error)
+        {
+            case ErrorCodes::Success:
+            {
+                auto email = jsonObj["email"].toString();
+                showTip(tr("验证码已发送到邮箱，注意查收"));
+                qDebug()<< "email is " << email ;
+                break;
+            }
+            case ErrorCodes::Error_Json:
+                showTip(tr("服务器json解析错误"));
+                break;
+            default: showTip(tr("参数错误")); break;
         }
-        auto email = jsonObj["email"].toString();
-        showTip(tr("验证码已发送到邮箱，注意查收"));
-        qDebug()<< "email is " << email ;
     });
 
-    //注册注册用户回包逻辑
+    // 重置用户回包逻辑
     _handlers.insert(ReqId::ID_RESET_PWD, [this](QJsonObject jsonObj){
         int error = jsonObj["error"].toInt();
-        if(error != ErrorCodes::SUCCESS){
-            showTip(tr("参数错误"));
-            enableOperation(true);
-            return;
+        enableOperation(true);
+        switch(error)
+        {
+            case ErrorCodes::Success:
+            {
+                auto email = jsonObj["email"].toString();
+                showTip(tr("重置成功"));
+                qDebug()<< "email is " << email ;
+                qDebug()<< "user uuid is " <<  jsonObj["uuid"].toString();
+                break;
+            }
+            case ErrorCodes::Error_Json:
+                showTip(tr("服务器json解析错误"));
+                break;
+            case ErrorCodes::VarifyExpired:
+                showTip(tr("验证码已过期"));
+                break;
+            case ErrorCodes::VarifyCodeErr:
+                showTip(tr("验证码错误"));
+                break;
+            case ErrorCodes::EmailNotMatch:
+                showTip(tr("邮箱和用户名不匹配"));
+                break;
+            case ErrorCodes::UserExist:
+                showTip(tr("用户已存在"));
+                break;
+            case ErrorCodes::PasswdUpFailed:
+                showTip(tr("服务器数据库错误，更新密码失败"));
+                break;
+            default: showTip(tr("参数错误")); break;
         }
-        auto email = jsonObj["email"].toString();
-        showTip(tr("重置成功,点击返回登录"));
-        qDebug()<< "email is " << email ;
-        qDebug()<< "user uuid is " <<  jsonObj["uuid"].toString();
     });
 }
 

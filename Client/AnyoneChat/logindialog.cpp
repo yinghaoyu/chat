@@ -108,7 +108,7 @@ void LoginDialog::initHttpHandlers()
     //注册获取登录回包逻辑
     _handlers.insert(ReqId::ID_LOGIN_USER, [this](QJsonObject jsonObj){
         int error = jsonObj["error"].toInt();
-        if(error != ErrorCodes::SUCCESS){
+        if(error != ErrorCodes::Success){
             showTip(tr("参数错误"));
             enableOperation(true);
             return;
@@ -216,7 +216,7 @@ void LoginDialog::on_login_btn_clicked()
 
 void LoginDialog::slot_login_mod_finish(ReqId id, QString res, ErrorCodes err)
 {
-    if(err != ErrorCodes::SUCCESS){
+    if(err != ErrorCodes::Success){
         showTip(tr("网络请求错误"));
         enableOperation(true);
         return;

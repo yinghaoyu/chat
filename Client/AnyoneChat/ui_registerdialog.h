@@ -10,7 +10,6 @@
 #define UI_REGISTERDIALOG_H
 
 #include <FluButton.h>
-#include <FluTextBox.h>
 #include <QtCore/QVariant>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QDialog>
@@ -21,8 +20,9 @@
 #include <QtWidgets/QStackedWidget>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
-#include <flupasswordbox.h>
 #include <timerbtn.h>
+#include "flupasswordbox.h"
+#include "flutextbox.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -67,6 +67,7 @@ public:
     QWidget *widget_2;
     QHBoxLayout *horizontalLayout_2;
     QSpacerItem *horizontalSpacer;
+    QWidget *widget_3;
     QPushButton *return_btn;
     QSpacerItem *horizontalSpacer_2;
     QSpacerItem *verticalSpacer_4;
@@ -261,6 +262,11 @@ public:
         horizontalSpacer = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
 
         horizontalLayout_2->addItem(horizontalSpacer);
+
+        widget_3 = new QWidget(widget_2);
+        widget_3->setObjectName(QString::fromUtf8("widget_3"));
+
+        horizontalLayout_2->addWidget(widget_3);
 
         return_btn = new QPushButton(widget_2);
         return_btn->setObjectName(QString::fromUtf8("return_btn"));

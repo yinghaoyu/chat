@@ -88,7 +88,7 @@ void RegisterDialog::on_get_code_clicked()
 
 void RegisterDialog::slot_reg_mod_finish(ReqId id, QString res, ErrorCodes err)
 {
-    if(err != ErrorCodes::SUCCESS){
+    if(err != ErrorCodes::Success){
         showTip(tr("网络请求错误"));
         enableOperation(true);
         return;
@@ -228,29 +228,54 @@ void RegisterDialog::initHttpHandlers()
     //注册获取验证码回包逻辑
     _handlers.insert(ReqId::ID_GET_VARIFY_CODE, [this](QJsonObject jsonObj){
         int error = jsonObj["error"].toInt();
-        if(error != ErrorCodes::SUCCESS){
-            showTip(tr("参数错误"));
-            enableOperation(true);
-            return;
+        switch(error)
+        {
+            case ErrorCodes::Success:
+            {
+                auto email = jsonObj["email"].toString();
+                showTip(tr("验证码已发送到邮箱，注意查收"));
+                qDebug()<< "email is " << email ;
+                break;
+            }
+            case ErrorCodes::Error_Json:
+                showTip(tr("服务器json解析错误"));
+                break;
+            default: showTip(tr("参数错误")); break;
         }
-        auto email = jsonObj["email"].toString();
-        showTip(tr("验证码已发送到邮箱，注意查收"));
-        qDebug()<< "email is " << email ;
     });
 
     //注册注册用户回包逻辑
     _handlers.insert(ReqId::ID_REG_USER, [this](QJsonObject jsonObj){
         int error = jsonObj["error"].toInt();
-        if(error != ErrorCodes::SUCCESS){
-            showTip(tr("参数错误"));
-            enableOperation(true);
-            return;
-        }
-        auto email = jsonObj["email"].toString();
-        showTip(tr("用户注册成功"));
-        qDebug()<< "email is " << email ;
-        qDebug()<< "user uuid is " <<  jsonObj["uid"].toString();
-        ChangeTipPage();
+        enableOperation(true);
+        switch(error)
+            {
+            case ErrorCodes::Success:
+                {
+                    auto email = jsonObj["email"].toString();
+                    showTip(tr("用户注册成功"));
+                    qDebug()<< "email is " << email ;
+                    qDebug()<< "user uuid is " <<  jsonObj["uid"].toString();
+                    ChangeTipPage();
+                    break;
+                }
+            case ErrorCodes::Error_Json:
+                showTip(tr("服务器json解析错误"));
+                break;
+            case ErrorCodes::PasswdErr:
+                showTip(tr("两次密码不一致"));
+                break;
+            case ErrorCodes::VarifyExpired:
+                showTip(tr("验证码已过期"));
+                break;
+            case ErrorCodes::VarifyCodeErr:
+                showTip(tr("验证码错误"));
+                break;
+            case ErrorCodes::UserExist:
+                showTip(tr("用户已存在"));
+                break;
+            default: showTip(tr("参数错误")); break;
+            }
     });
 }
 

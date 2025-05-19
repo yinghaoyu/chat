@@ -135,14 +135,14 @@ void TcpMgr::initHandlers()
         qDebug()<< "data jsonobj is " << jsonObj ;
 
         if(!jsonObj.contains("error")){
-            int err = ErrorCodes::ERR_JSON;
+            int err = ErrorCodes::Error_Json;
             qDebug() << "Login Failed, err is Json Parse Err" << err ;
             emit sig_login_failed(err);
             return;
         }
 
         int err = jsonObj["error"].toInt();
-        if(err != ErrorCodes::SUCCESS){
+        if(err != ErrorCodes::Success){
             qDebug() << "Login Failed, err is " << err ;
             emit sig_login_failed(err);
             return;
@@ -186,7 +186,7 @@ void TcpMgr::initHandlers()
 		QJsonObject jsonObj = jsonDoc.object();
 
 		if (!jsonObj.contains("error")) {
-			int err = ErrorCodes::ERR_JSON;
+            int err = ErrorCodes::Error_Json;
 			qDebug() << "Login Failed, err is Json Parse Err" << err;
 
 			emit sig_user_search(nullptr);
@@ -194,7 +194,7 @@ void TcpMgr::initHandlers()
 		}
 
 		int err = jsonObj["error"].toInt();
-		if (err != ErrorCodes::SUCCESS) {
+        if (err != ErrorCodes::Success) {
 			qDebug() << "Login Failed, err is " << err;
             emit sig_user_search(nullptr);
 			return;
@@ -221,7 +221,7 @@ void TcpMgr::initHandlers()
 		QJsonObject jsonObj = jsonDoc.object();
 
 		if (!jsonObj.contains("error")) {
-			int err = ErrorCodes::ERR_JSON;
+            int err = ErrorCodes::Error_Json;
 			qDebug() << "Login Failed, err is Json Parse Err" << err;
 
 			emit sig_user_search(nullptr);
@@ -229,7 +229,7 @@ void TcpMgr::initHandlers()
 		}
 
 		int err = jsonObj["error"].toInt();
-		if (err != ErrorCodes::SUCCESS) {
+        if (err != ErrorCodes::Success) {
 			qDebug() << "Login Failed, err is " << err;
 			emit sig_user_search(nullptr);
 			return;
@@ -263,13 +263,13 @@ void TcpMgr::initHandlers()
 
         QJsonObject jsonObj = jsonDoc.object();
         if (!jsonObj.contains("error")) {
-            int err = ErrorCodes::ERR_JSON;
+            int err = ErrorCodes::Error_Json;
             qDebug() << "Auth Friend Failed, err is " << err;
             return;
         }
 
         int err = jsonObj["error"].toInt();
-        if (err != ErrorCodes::SUCCESS) {
+        if (err != ErrorCodes::Success) {
             qDebug() << "Auth Friend Failed, err is " << err;
             return;
         }
@@ -301,13 +301,13 @@ void TcpMgr::initHandlers()
         QJsonObject jsonObj = jsonDoc.object();
 
         if (!jsonObj.contains("error")) {
-            int err = ErrorCodes::ERR_JSON;
+            int err = ErrorCodes::Error_Json;
             qDebug() << "Add Friend Failed, err is Json Parse Err" << err;
             return;
         }
 
         int err = jsonObj["error"].toInt();
-        if (err != ErrorCodes::SUCCESS) {
+        if (err != ErrorCodes::Success) {
             qDebug() << "Add Friend Failed, err is " << err;
             return;
         }
@@ -331,13 +331,13 @@ void TcpMgr::initHandlers()
         QJsonObject jsonObj = jsonDoc.object();
 
         if (!jsonObj.contains("error")) {
-            int err = ErrorCodes::ERR_JSON;
+            int err = ErrorCodes::Error_Json;
             qDebug() << "Auth Friend Failed, err is Json Parse Err" << err;
             return;
         }
 
         int err = jsonObj["error"].toInt();
-        if (err != ErrorCodes::SUCCESS) {
+        if (err != ErrorCodes::Success) {
             qDebug() << "Auth Friend Failed, err is " << err;
             return;
         }
@@ -369,13 +369,13 @@ void TcpMgr::initHandlers()
         QJsonObject jsonObj = jsonDoc.object();
 
         if (!jsonObj.contains("error")) {
-            int err = ErrorCodes::ERR_JSON;
+            int err = ErrorCodes::Error_Json;
             qDebug() << "Chat Msg Rsp Failed, err is Json Parse Err" << err;
             return;
         }
 
         int err = jsonObj["error"].toInt();
-        if (err != ErrorCodes::SUCCESS) {
+        if (err != ErrorCodes::Success) {
             qDebug() << "Chat Msg Rsp Failed, err is " << err;
             return;
         }
@@ -399,13 +399,13 @@ void TcpMgr::initHandlers()
         QJsonObject jsonObj = jsonDoc.object();
 
         if (!jsonObj.contains("error")) {
-            int err = ErrorCodes::ERR_JSON;
+            int err = ErrorCodes::Error_Json;
             qDebug() << "Notify Chat Msg Failed, err is Json Parse Err" << err;
             return;
         }
 
         int err = jsonObj["error"].toInt();
-        if (err != ErrorCodes::SUCCESS) {
+        if (err != ErrorCodes::Success) {
             qDebug() << "Notify Chat Msg Failed, err is " << err;
             return;
         }
@@ -431,13 +431,13 @@ void TcpMgr::initHandlers()
         QJsonObject jsonObj = jsonDoc.object();
 
         if (!jsonObj.contains("error")) {
-            int err = ErrorCodes::ERR_JSON;
+            int err = ErrorCodes::Error_Json;
             qDebug() << "Notify Chat Msg Failed, err is Json Parse Err" << err;
             return;
         }
 
         int err = jsonObj["error"].toInt();
-        if (err != ErrorCodes::SUCCESS) {
+        if (err != ErrorCodes::Success) {
             qDebug() << "Notify Chat Msg Failed, err is " << err;
             return;
         }
@@ -465,13 +465,13 @@ void TcpMgr::initHandlers()
         QJsonObject jsonObj = jsonDoc.object();
 
         if (!jsonObj.contains("error")) {
-            int err = ErrorCodes::ERR_JSON;
+            int err = ErrorCodes::Error_Json;
             qDebug() << "Heart Beat Msg Failed, err is Json Parse Err" << err;
             return;
         }
 
         int err = jsonObj["error"].toInt();
-        if (err != ErrorCodes::SUCCESS) {
+        if (err != ErrorCodes::Success) {
             qDebug() << "Heart Beat Msg Failed, err is " << err;
             return;
         }

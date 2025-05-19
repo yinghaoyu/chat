@@ -408,6 +408,9 @@
              </spacer>
             </item>
             <item>
+             <widget class="QWidget" name="widget_3" native="true"/>
+            </item>
+            <item>
              <widget class="QPushButton" name="return_btn">
               <property name="minimumSize">
                <size>
@@ -477,13 +480,13 @@
   <customwidget>
    <class>FluTextBox</class>
    <extends>QWidget</extends>
-   <header location="global">FluTextBox.h</header>
+   <header>flutextbox.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>FluPasswordBox</class>
    <extends>QWidget</extends>
-   <header location="global">flupasswordbox.h</header>
+   <header>flupasswordbox.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
