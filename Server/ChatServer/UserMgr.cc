@@ -15,7 +15,7 @@ std::shared_ptr<Session> UserMgr::GetSession(int uid)
         return nullptr;
     }
 
-    return iter->second;
+    return iter->second.lock();
 }
 
 void UserMgr::SetUserSession(int uid, std::shared_ptr<Session> session)
@@ -24,7 +24,7 @@ void UserMgr::SetUserSession(int uid, std::shared_ptr<Session> session)
     sessions_[uid] = session;
 }
 
-void UserMgr::RmvUserSession(int uid, std::string session_id)
+void UserMgr::RmvUserSession(int uid, const std::string& session_id)
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
@@ -35,7 +35,16 @@ void UserMgr::RmvUserSession(int uid, std::string session_id)
         return;
     }
 
-    auto session_id_ = iter->second->GetSessionId();
+    auto ptr = iter->second.lock();
+    if (ptr == nullptr)
+    {
+        LOG_ERROR("session removed failure, uid: {}, session : {}", uid, session_id);
+        // 清理无效 weak_ptr
+        sessions_.erase(uid);
+        return;
+    }
+
+    auto session_id_ = ptr->GetSessionId();
     // 不相等说明是其他地方登录了
     if (session_id_ != session_id)
     {
