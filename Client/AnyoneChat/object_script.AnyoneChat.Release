@@ -1,6 +1,9 @@
 release/BubbleFrame.o
 release/ChatItemBase.o
 release/ChatView.o
+release/FluButton.o
+release/FluPasswordBox.o
+release/FluTextBox.o
 release/MessageTextEdit.o
 release/PictureBubble.o
 release/TextBubble.o
@@ -51,6 +54,9 @@ release/qrc_rc.o
 release/moc_BubbleFrame.o
 release/moc_ChatItemBase.o
 release/moc_ChatView.o
+release/moc_FluButton.o
+release/moc_FluPasswordBox.o
+release/moc_FluTextBox.o
 release/moc_MessageTextEdit.o
 release/moc_PictureBubble.o
 release/moc_TextBubble.o

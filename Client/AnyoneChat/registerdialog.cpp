@@ -3,6 +3,8 @@
 #include <QRegularExpression>
 #include "global.h"
 #include "httpmgr.h"
+#include "FluPasswordBox.h"
+#include "FluTextBox.h"
 #include <QRegularExpressionValidator>
 #include <QRandomGenerator>
 
@@ -11,67 +13,41 @@ RegisterDialog::RegisterDialog(QWidget *parent) :
     ui(new Ui::RegisterDialog),_countdown(5)
 {
     ui->setupUi(this);
-    ui->user_edit->setValidator(new QRegExpValidator(QRegExp("[a-zA-Z0-9]+$")));
-    //设置密码格式隐藏
-    ui->pass_edit->setEchoMode(QLineEdit::Password);
-    ui->confirm_edit->setEchoMode(QLineEdit::Password);
-    ui->err_tip->setProperty("state","normal");
-    repolish(ui->err_tip);
+    //ui->user_edit->setValidator(new QRegExpValidator(QRegExp("[a-zA-Z0-9]+$")));
     connect(HttpMgr::GetInstance().get(), &HttpMgr::sig_reg_mod_finish, this,
             &RegisterDialog::slot_reg_mod_finish);
     initHttpHandlers();
-    //day11 设定输入框输入后清空字符串
-    ui->err_tip->clear();
 
-    connect(ui->user_edit,&QLineEdit::editingFinished,this,[this](){
+    connect(ui->user_edit,&FluTextBox::commit,this,[this](){
         checkUserValid();
     });
 
-    connect(ui->email_edit, &QLineEdit::editingFinished, this, [this](){
+    connect(ui->email_edit, &FluTextBox::commit, this, [this](){
         checkEmailValid();
     });
 
-    connect(ui->pass_edit, &QLineEdit::editingFinished, this, [this](){
+    connect(ui->pass_edit, &FluPasswordBox::commit, this, [this](){
         checkPassValid();
     });
 
-    connect(ui->confirm_edit, &QLineEdit::editingFinished, this, [this](){
+    connect(ui->confirm_edit, &FluPasswordBox::commit, this, [this](){
         checkConfirmValid();
     });
 
-    connect(ui->varify_edit, &QLineEdit::editingFinished, this, [this](){
+    connect(ui->varify_edit, &FluTextBox::commit, this, [this](){
          checkVarifyValid();
     });
 
-    //设置浮动显示手形状
-    ui->pass_visible->setCursor(Qt::PointingHandCursor);
-    ui->confirm_visible->setCursor(Qt::PointingHandCursor);
+    this->notification = new Notification(this);
+    this->notification->setGeometry(QRect(QPoint(this->rect().center().x() - (this->notification->width() / 2), this->rect().top() - (this->notification->height())), QSize(this->notification->size())));
+    this->notification->hide();
 
-    ui->pass_visible->SetState("unvisible","unvisible_hover","","visible",
-                               "visible_hover","");
+    this->animation = new QTimeLine(500, this);
+    this->animation->setUpdateInterval(0);
+    this->animation->setFrameRange(this->rect().top() - (this->notification->height()), 20);
 
-    ui->confirm_visible->SetState("unvisible","unvisible_hover","","visible",
-                                  "visible_hover","");
-    //连接点击事件
-
-    connect(ui->pass_visible, &ClickedLabel::clicked, this, [this]() {
-        auto state = ui->pass_visible->GetCurState();
-        if(state == ClickLbState::Normal){
-            ui->pass_edit->setEchoMode(QLineEdit::Password);
-        }else{
-             ui->pass_edit->setEchoMode(QLineEdit::Normal);
-        }
-        qDebug() << "Label was clicked!";
-    });
-
-    connect(ui->confirm_visible, &ClickedLabel::clicked, this, [this]() {
-        auto state = ui->confirm_visible->GetCurState();
-        if(state == ClickLbState::Normal){
-            ui->confirm_edit->setEchoMode(QLineEdit::Password);
-        }else{
-             ui->confirm_edit->setEchoMode(QLineEdit::Normal);
-        }
-        qDebug() << "Label was clicked!";
+    connect(this->animation, &QTimeLine::frameChanged, this, [=](int frame) {
+        this->notification->move(this->notification->geometry().x(), frame);
     });
 
     // 创建定时器
@@ -113,7 +89,8 @@ void RegisterDialog::on_get_code_clicked()
 void RegisterDialog::slot_reg_mod_finish(ReqId id, QString res, ErrorCodes err)
 {
     if(err != ErrorCodes::SUCCESS){
-        showTip(tr("网络请求错误"),false);
+        showTip(tr("网络请求错误"));
+        enableOperation(true);
         return;
     }
 
@@ -121,13 +98,15 @@ void RegisterDialog::slot_reg_mod_finish(ReqId id, QString res, ErrorCodes err)
     QJsonDocument jsonDoc = QJsonDocument::fromJson(res.toUtf8());
     //json解析错误
     if(jsonDoc.isNull()){
-        showTip(tr("json解析错误"),false);
+        showTip(tr("json解析错误"));
+        enableOperation(true);
         return;
     }
 
     //json解析错误
     if(!jsonDoc.isObject()){
-        showTip(tr("json解析错误"),false);
+        showTip(tr("json解析错误"));
+        enableOperation(true);
         return;
     }
 
@@ -142,11 +121,9 @@ void RegisterDialog::slot_reg_mod_finish(ReqId id, QString res, ErrorCodes err)
 bool RegisterDialog::checkUserValid()
 {
     if(ui->user_edit->text() == ""){
-        AddTipErr(TipErr::TIP_USER_ERR, tr("用户名不能为空"));
+        showTip(tr("用户名不能为空"));
         return false;
     }
-
-    DelTipErr(TipErr::TIP_USER_ERR);
     return true;
 }
 
@@ -159,11 +136,9 @@ bool RegisterDialog::checkEmailValid()
     bool match = regex.match(email).hasMatch(); // 执行正则表达式匹配
     if(!match){
         //提示邮箱不正确
-        AddTipErr(TipErr::TIP_EMAIL_ERR, tr("邮箱地址不正确"));
+        showTip(tr("邮箱地址不正确"));
         return false;
     }
-
-    DelTipErr(TipErr::TIP_EMAIL_ERR);
     return true;
 }
 
@@ -174,7 +149,7 @@ bool RegisterDialog::checkPassValid()
 
     if(pass.length() < 6 || pass.length()>15){
         //提示长度不准确
-        AddTipErr(TipErr::TIP_PWD_ERR, tr("密码长度应为6~15"));
+        showTip(tr("密码长度应为6~15"));
         return false;
     }
 
@@ -185,18 +160,14 @@ bool RegisterDialog::checkPassValid()
     bool match = regExp.match(pass).hasMatch();
     if(!match){
         //提示字符非法
-        AddTipErr(TipErr::TIP_PWD_ERR, tr("不能包含非法字符"));
+        showTip(tr("不能包含非法字符"));
         return false;;
     }
 
-    DelTipErr(TipErr::TIP_PWD_ERR);
-
     if(pass != confirm){
         //提示密码不匹配
-        AddTipErr(TipErr::TIP_PWD_CONFIRM, tr("密码和确认密码不匹配"));
+        showTip(tr("密码和确认密码不匹配"));
         return false;
-    }else{
-       DelTipErr(TipErr::TIP_PWD_CONFIRM);
     }
     return true;
 }
@@ -205,11 +176,9 @@ bool RegisterDialog::checkVarifyValid()
 {
     auto pass = ui->varify_edit->text();
     if(pass.isEmpty()){
-        AddTipErr(TipErr::TIP_VARIFY_ERR, tr("验证码不能为空"));
+        showTip(tr("验证码不能为空"));
         return false;
     }
-
-    DelTipErr(TipErr::TIP_VARIFY_ERR);
     return true;
 }
 
@@ -220,7 +189,7 @@ bool RegisterDialog::checkConfirmValid()
 
     if(confirm.length() < 6 || confirm.length() > 15 ){
         //提示长度不准确
-        AddTipErr(TipErr::TIP_CONFIRM_ERR, tr("密码长度应为6~15"));
+        showTip(tr("密码长度应为6~15"));
         return false;
     }
 
@@ -231,19 +200,26 @@ bool RegisterDialog::checkConfirmValid()
     bool match = regExp.match(confirm).hasMatch();
     if(!match){
         //提示字符非法
-        AddTipErr(TipErr::TIP_CONFIRM_ERR, tr("不能包含非法字符"));
+        showTip(tr("不能包含非法字符"));
         return false;
     }
-
-    DelTipErr(TipErr::TIP_CONFIRM_ERR);
 
     if(pass != confirm){
         //提示密码不匹配
-        AddTipErr(TipErr::TIP_PWD_CONFIRM, tr("确认密码和密码不匹配"));
+        showTip(tr("确认密码和密码不匹配"));
         return false;
-    }else{
-       DelTipErr(TipErr::TIP_PWD_CONFIRM);
     }
+    return true;
+}
+
+
+bool RegisterDialog::enableOperation(bool enabled)
+{
+    ui->user_edit->setEnabled(enabled);
+    ui->email_edit->setEnabled(enabled);
+    ui->pass_edit->setEnabled(enabled);
+    ui->confirm_edit->setEnabled(enabled);
+    ui->varify_edit->setEnabled(enabled);
     return true;
 }
 
@@ -253,11 +229,12 @@ void RegisterDialog::initHttpHandlers()
     _handlers.insert(ReqId::ID_GET_VARIFY_CODE, [this](QJsonObject jsonObj){
         int error = jsonObj["error"].toInt();
         if(error != ErrorCodes::SUCCESS){
-            showTip(tr("参数错误"),false);
+            showTip(tr("参数错误"));
+            enableOperation(true);
             return;
         }
         auto email = jsonObj["email"].toString();
-        showTip(tr("验证码已发送到邮箱，注意查收"), true);
+        showTip(tr("验证码已发送到邮箱，注意查收"));
         qDebug()<< "email is " << email ;
     });
 
@@ -265,32 +242,16 @@ void RegisterDialog::initHttpHandlers()
     _handlers.insert(ReqId::ID_REG_USER, [this](QJsonObject jsonObj){
         int error = jsonObj["error"].toInt();
         if(error != ErrorCodes::SUCCESS){
-            showTip(tr("参数错误"),false);
+            showTip(tr("参数错误"));
+            enableOperation(true);
             return;
         }
         auto email = jsonObj["email"].toString();
-        showTip(tr("用户注册成功"), true);
+        showTip(tr("用户注册成功"));
         qDebug()<< "email is " << email ;
         qDebug()<< "user uuid is " <<  jsonObj["uid"].toString();
         ChangeTipPage();
     });
-}
-
-void RegisterDialog::AddTipErr(TipErr te, QString tips)
-{
-    _tip_errs[te] = tips;
-    showTip(tips, false);
-}
-
-void RegisterDialog::DelTipErr(TipErr te)
-{
-    _tip_errs.remove(te);
-    if(_tip_errs.empty()){
-      ui->err_tip->clear();
-      return;
-    }
-
-    showTip(_tip_errs.first(), false);
 }
 
 void RegisterDialog::ChangeTipPage()
@@ -302,17 +263,18 @@ void RegisterDialog::ChangeTipPage()
     _countdown_timer->start(1000);
 }
 
-void RegisterDialog::showTip(QString str, bool b_ok)
+void RegisterDialog::showTip(QString str)
 {
-    if(b_ok){
-         ui->err_tip->setProperty("state","normal");
-    }else{
-        ui->err_tip->setProperty("state","err");
-    }
+    this->notification->setText(str);
+    this->notification->setGeometry(QRect(QPoint(this->rect().center().x() - (this->notification->width() / 2), this->rect().top() - (this->notification->height())), QSize(this->notification->size())));
+    this->notification->show();
 
-    ui->err_tip->setText(str);
-
-    repolish(ui->err_tip);
+    this->animation->setDirection(QTimeLine::Forward);
+    this->animation->start();
+    QTimer::singleShot(1000, this, [=]() {
+        this->animation->setDirection(QTimeLine::Backward);
+        this->animation->start();
+    });
 }
 
 //day11 添加确认槽函数
@@ -342,7 +304,7 @@ void RegisterDialog::on_sure_btn_clicked()
     if(!valid){
         return;
     }
-
+    enableOperation(false);
     //day11 发送http请求注册用户
     QJsonObject json_obj;
     json_obj["user"] = ui->user_edit->text();

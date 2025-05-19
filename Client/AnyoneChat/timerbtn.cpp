@@ -2,7 +2,7 @@
 #include <QMouseEvent>
 #include <QDebug>
 
-TimerBtn::TimerBtn(QWidget *parent):QPushButton(parent),_counter(10)
+TimerBtn::TimerBtn(QWidget *parent):FluButton(parent),_counter(10)
 {
     _timer = new QTimer(this);
 

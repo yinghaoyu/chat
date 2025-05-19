@@ -9,18 +9,19 @@
 #ifndef UI_LOGINDIALOG_H
 #define UI_LOGINDIALOG_H
 
+#include <FluButton.h>
+#include <FluTextBox.h>
 #include <QtCore/QVariant>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QDialog>
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QLabel>
-#include <QtWidgets/QLineEdit>
-#include <QtWidgets/QPushButton>
 #include <QtWidgets/QSpacerItem>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
-#include "clickedlabel.h"
+#include <clickedlabel.h>
+#include <flupasswordbox.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -34,12 +35,12 @@ public:
     QLabel *head_label;
     QHBoxLayout *horizontalLayout_2;
     QLabel *email_lb;
-    QLineEdit *email_edit;
+    FluTextBox *email_edit;
     QSpacerItem *horizontalSpacer_6;
     QHBoxLayout *horizontalLayout_3;
     QLabel *pass_label;
-    QLineEdit *pass_edit;
-    ClickedLabel *pass_visible;
+    FluPasswordBox *pass_edit;
+    QSpacerItem *horizontalSpacer_8;
     QHBoxLayout *horizontalLayout_4;
     QSpacerItem *horizontalSpacer;
     ClickedLabel *reg_label;
@@ -48,7 +49,7 @@ public:
     QSpacerItem *verticalSpacer_2;
     QHBoxLayout *horizontalLayout_5;
     QSpacerItem *horizontalSpacer_2;
-    QPushButton *login_btn;
+    FluButton *login_btn;
     QSpacerItem *horizontalSpacer_3;
     QSpacerItem *verticalSpacer;
 
@@ -88,11 +89,10 @@ public:
 
         horizontalLayout_2->addWidget(email_lb);
 
-        email_edit = new QLineEdit(LoginDialog);
+        email_edit = new FluTextBox(LoginDialog);
         email_edit->setObjectName(QString::fromUtf8("email_edit"));
         email_edit->setMinimumSize(QSize(0, 30));
         email_edit->setMaximumSize(QSize(16777215, 30));
-        email_edit->setAlignment(Qt::AlignCenter);
 
         horizontalLayout_2->addWidget(email_edit);
 
@@ -112,20 +112,16 @@ public:
 
         horizontalLayout_3->addWidget(pass_label);
 
-        pass_edit = new QLineEdit(LoginDialog);
+        pass_edit = new FluPasswordBox(LoginDialog);
         pass_edit->setObjectName(QString::fromUtf8("pass_edit"));
         pass_edit->setMinimumSize(QSize(0, 30));
         pass_edit->setMaximumSize(QSize(16777215, 30));
-        pass_edit->setAlignment(Qt::AlignCenter);
 
         horizontalLayout_3->addWidget(pass_edit);
 
-        pass_visible = new ClickedLabel(LoginDialog);
-        pass_visible->setObjectName(QString::fromUtf8("pass_visible"));
-        pass_visible->setMinimumSize(QSize(20, 20));
-        pass_visible->setMaximumSize(QSize(20, 20));
+        horizontalSpacer_8 = new QSpacerItem(25, 20, QSizePolicy::Fixed, QSizePolicy::Minimum);
 
-        horizontalLayout_3->addWidget(pass_visible);
+        horizontalLayout_3->addItem(horizontalSpacer_8);
 
 
         verticalLayout_2->addLayout(horizontalLayout_3);
@@ -163,7 +159,7 @@ public:
 
         horizontalLayout_5->addItem(horizontalSpacer_2);
 
-        login_btn = new QPushButton(LoginDialog);
+        login_btn = new FluButton(LoginDialog);
         login_btn->setObjectName(QString::fromUtf8("login_btn"));
         login_btn->setMinimumSize(QSize(100, 30));
 
@@ -194,10 +190,7 @@ public:
         LoginDialog->setWindowTitle(QCoreApplication::translate("LoginDialog", "Dialog", nullptr));
         head_label->setText(QString());
         email_lb->setText(QString());
-        email_edit->setPlaceholderText(QCoreApplication::translate("LoginDialog", "\350\276\223\345\205\245\351\202\256\347\256\261", nullptr));
         pass_label->setText(QString());
-        pass_edit->setPlaceholderText(QCoreApplication::translate("LoginDialog", "\350\276\223\345\205\245\345\257\206\347\240\201", nullptr));
-        pass_visible->setText(QString());
         reg_label->setText(QCoreApplication::translate("LoginDialog", "\346\263\250\345\206\214\350\264\246\345\217\267", nullptr));
         forget_label->setText(QCoreApplication::translate("LoginDialog", "\345\277\230\350\256\260\345\257\206\347\240\201", nullptr));
         login_btn->setText(QCoreApplication::translate("LoginDialog", "\347\231\273\345\275\225", nullptr));

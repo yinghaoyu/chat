@@ -9,16 +9,17 @@
 #ifndef UI_RESETDIALOG_H
 #define UI_RESETDIALOG_H
 
+#include <FluButton.h>
 #include <QtCore/QVariant>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QDialog>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QLabel>
-#include <QtWidgets/QLineEdit>
-#include <QtWidgets/QPushButton>
 #include <QtWidgets/QSpacerItem>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
+#include <flupasswordbox.h>
+#include <flutextbox.h>
 #include <timerbtn.h>
 
 QT_BEGIN_NAMESPACE
@@ -32,25 +33,25 @@ public:
     QWidget *widget;
     QHBoxLayout *horizontalLayout;
     QLabel *user_lb;
-    QLineEdit *user_edit;
+    FluTextBox *user_edit;
     QWidget *widget_2;
     QHBoxLayout *horizontalLayout_2;
     QLabel *email_lb;
-    QLineEdit *email_edit;
+    FluTextBox *email_edit;
     QWidget *widget_3;
     QHBoxLayout *horizontalLayout_3;
     QLabel *varify_lb;
-    QLineEdit *varify_edit;
+    FluTextBox *varify_edit;
     TimerBtn *varify_btn;
     QWidget *widget_4;
     QHBoxLayout *horizontalLayout_4;
     QLabel *pwd_lb;
-    QLineEdit *pwd_edit;
+    FluPasswordBox *pwd_edit;
     QSpacerItem *verticalSpacer_2;
     QWidget *widget_5;
     QHBoxLayout *horizontalLayout_5;
-    QPushButton *sure_btn;
-    QPushButton *return_btn;
+    FluButton *sure_btn;
+    FluButton *return_btn;
     QSpacerItem *verticalSpacer_3;
 
     void setupUi(QDialog *ResetDialog)
@@ -83,7 +84,7 @@ public:
 
         horizontalLayout->addWidget(user_lb);
 
-        user_edit = new QLineEdit(widget);
+        user_edit = new FluTextBox(widget);
         user_edit->setObjectName(QString::fromUtf8("user_edit"));
         user_edit->setMinimumSize(QSize(0, 25));
         user_edit->setMaximumSize(QSize(16777215, 25));
@@ -104,7 +105,7 @@ public:
 
         horizontalLayout_2->addWidget(email_lb);
 
-        email_edit = new QLineEdit(widget_2);
+        email_edit = new FluTextBox(widget_2);
         email_edit->setObjectName(QString::fromUtf8("email_edit"));
         email_edit->setMinimumSize(QSize(0, 25));
         email_edit->setMaximumSize(QSize(16777215, 25));
@@ -125,7 +126,7 @@ public:
 
         horizontalLayout_3->addWidget(varify_lb);
 
-        varify_edit = new QLineEdit(widget_3);
+        varify_edit = new FluTextBox(widget_3);
         varify_edit->setObjectName(QString::fromUtf8("varify_edit"));
         varify_edit->setMinimumSize(QSize(0, 25));
         varify_edit->setMaximumSize(QSize(16777215, 25));
@@ -153,7 +154,7 @@ public:
 
         horizontalLayout_4->addWidget(pwd_lb);
 
-        pwd_edit = new QLineEdit(widget_4);
+        pwd_edit = new FluPasswordBox(widget_4);
         pwd_edit->setObjectName(QString::fromUtf8("pwd_edit"));
         pwd_edit->setMinimumSize(QSize(0, 25));
         pwd_edit->setMaximumSize(QSize(16777215, 25));
@@ -171,14 +172,14 @@ public:
         widget_5->setObjectName(QString::fromUtf8("widget_5"));
         horizontalLayout_5 = new QHBoxLayout(widget_5);
         horizontalLayout_5->setObjectName(QString::fromUtf8("horizontalLayout_5"));
-        sure_btn = new QPushButton(widget_5);
+        sure_btn = new FluButton(widget_5);
         sure_btn->setObjectName(QString::fromUtf8("sure_btn"));
         sure_btn->setMinimumSize(QSize(0, 25));
         sure_btn->setMaximumSize(QSize(16777215, 25));
 
         horizontalLayout_5->addWidget(sure_btn);
 
-        return_btn = new QPushButton(widget_5);
+        return_btn = new FluButton(widget_5);
         return_btn->setObjectName(QString::fromUtf8("return_btn"));
         return_btn->setMinimumSize(QSize(0, 25));
         return_btn->setMaximumSize(QSize(16777215, 25));

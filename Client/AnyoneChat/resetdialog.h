@@ -1,8 +1,11 @@
 #ifndef RESETDIALOG_H
 #define RESETDIALOG_H
 
-#include <QDialog>
+#include "notification.h"
 #include "global.h"
+
+#include <QDialog>
+#include <QTimeLine>
 
 namespace Ui {
 class ResetDialog;
@@ -27,14 +30,14 @@ private slots:
 private:
     bool checkUserValid();
     bool checkPassValid();
-    void showTip(QString str,bool b_ok);
+    void showTip(QString str);
     bool checkEmailValid();
     bool checkVarifyValid();
-    void AddTipErr(TipErr te,QString tips);
-    void DelTipErr(TipErr te);
+    bool enableOperation(bool enabled);
     void initHandlers();
     Ui::ResetDialog *ui;
-    QMap<TipErr, QString> _tip_errs;
+    Notification* notification = Q_NULLPTR;
+    QTimeLine* animation = Q_NULLPTR;
     QMap<ReqId, std::function<void(const QJsonObject&)>> _handlers;
 signals:
     void switchLogin();

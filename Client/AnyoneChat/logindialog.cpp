@@ -8,6 +8,7 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QPicture>
+#include <QColor>
 #include <QTimer>
 
 LoginDialog::LoginDialog(QWidget *parent) :
@@ -45,24 +46,11 @@ LoginDialog::LoginDialog(QWidget *parent) :
     ui->pass_label->setPixmap(pass_pm.scaled( ui->pass_label->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
     ui->pass_label->setScaledContents(true);
 
-    //设置密码格式隐藏
-    ui->pass_edit->setEchoMode(QLineEdit::Password);
-    //设置浮动显示手形状
-    ui->pass_visible->setCursor(Qt::PointingHandCursor);
-
-    ui->pass_visible->SetState("unvisible","unvisible_hover","","visible",
-        "visible_hover","");
-
-    //连接点击事件
-    connect(ui->pass_visible, &ClickedLabel::clicked, this, [this]() {
-        auto state = ui->pass_visible->GetCurState();
-        if(state == ClickLbState::Normal){
-            ui->pass_edit->setEchoMode(QLineEdit::Password);
-        }else{
-            ui->pass_edit->setEchoMode(QLineEdit::Normal);
-        }
-        qDebug() << "Label was clicked!";
-    });
+    ui->login_btn->setNormalColor(QColor(0,120,212));
+    ui->login_btn->setHoverColor(QColor(0,120,212).lighter(110));
+    ui->login_btn->setDisableColor(QColor(199,199,199));
+    ui->login_btn->setTextColor(QColor(255,255,255));
+    ui->login_btn->setEnabled(true);
 
     this->notification = new Notification(this);
     this->notification->setGeometry(QRect(QPoint(this->rect().center().x() - (this->notification->width() / 2), this->rect().top() - (this->notification->height())), QSize(this->notification->size())));

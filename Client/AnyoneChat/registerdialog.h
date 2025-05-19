@@ -1,13 +1,16 @@
 #ifndef REGISTERDIALOG_H
 #define REGISTERDIALOG_H
 
-#include <QDialog>
 #include "global.h"
+#include "notification.h"
+
+#include <QDialog>
 #include <functional>
 #include <QMap>
 #include <QJsonObject>
 #include <QSet>
 #include <QTimer>
+#include <QTimeLine>
 
 namespace Ui {
 class RegisterDialog;
@@ -37,14 +40,14 @@ private:
     bool checkPassValid();
     bool checkVarifyValid();
     bool checkConfirmValid();
+    bool enableOperation(bool enabled);
     void initHttpHandlers();
-    void AddTipErr(TipErr te,QString tips);
-    void DelTipErr(TipErr te);
     void ChangeTipPage();
     Ui::RegisterDialog *ui;
-    void showTip(QString str,bool b_ok);
+    void showTip(QString str);
     QMap<ReqId, std::function<void(const QJsonObject&)>> _handlers;
-    QMap<TipErr, QString> _tip_errs;
+    Notification* notification = Q_NULLPTR;
+    QTimeLine* animation = Q_NULLPTR;
     QTimer * _countdown_timer;
     int _countdown;
 signals:

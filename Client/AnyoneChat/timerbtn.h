@@ -1,9 +1,9 @@
 #ifndef TIMERBTN_H
 #define TIMERBTN_H
-#include <QPushButton>
+#include "FluButton.h"
 #include <QTimer>
 
-class TimerBtn : public QPushButton
+class TimerBtn : public FluButton
 {
 public:
     TimerBtn(QWidget *parent = nullptr);

@@ -50,18 +50,13 @@
          </item>
          <item>
           <widget class="QWidget" name="widget" native="true">
-           <layout class="QVBoxLayout" name="verticalLayout_4">
-            <item>
-             <widget class="QLabel" name="err_tip">
-              <property name="text">
-               <string>错误提示</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-           </layout>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>25</height>
+            </size>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_4"/>
           </widget>
          </item>
          <item>
@@ -86,7 +81,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QLineEdit" name="user_edit">
+            <widget class="FluTextBox" name="user_edit" native="true">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -125,7 +120,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QLineEdit" name="email_edit">
+            <widget class="FluTextBox" name="email_edit" native="true">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -164,7 +159,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QLineEdit" name="pass_edit">
+            <widget class="FluPasswordBox" name="pass_edit" native="true">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -176,28 +171,6 @@
                <width>16777215</width>
                <height>25</height>
               </size>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="ClickedLabel" name="pass_visible">
-             <property name="minimumSize">
-              <size>
-               <width>20</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>20</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="styleSheet">
-              <string notr="true"/>
-             </property>
-             <property name="text">
-              <string/>
              </property>
             </widget>
            </item>
@@ -225,7 +198,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QLineEdit" name="confirm_edit">
+            <widget class="FluPasswordBox" name="confirm_edit" native="true">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -237,28 +210,6 @@
                <width>16777215</width>
                <height>25</height>
               </size>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="ClickedLabel" name="confirm_visible">
-             <property name="minimumSize">
-              <size>
-               <width>20</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>20</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="styleSheet">
-              <string notr="true"/>
-             </property>
-             <property name="text">
-              <string/>
              </property>
             </widget>
            </item>
@@ -286,7 +237,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QLineEdit" name="varify_edit">
+            <widget class="FluTextBox" name="varify_edit" native="true">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -338,7 +289,7 @@
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_7">
            <item>
-            <widget class="QPushButton" name="sure_btn">
+            <widget class="FluButton" name="sure_btn">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -357,7 +308,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="cancel_btn">
+            <widget class="FluButton" name="cancel_btn">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -514,14 +465,26 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ClickedLabel</class>
-   <extends>QLabel</extends>
-   <header>clickedlabel.h</header>
+   <class>FluButton</class>
+   <extends>QPushButton</extends>
+   <header location="global">FluButton.h</header>
   </customwidget>
   <customwidget>
    <class>TimerBtn</class>
    <extends>QPushButton</extends>
    <header location="global">timerbtn.h</header>
+  </customwidget>
+  <customwidget>
+   <class>FluTextBox</class>
+   <extends>QWidget</extends>
+   <header location="global">FluTextBox.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>FluPasswordBox</class>
+   <extends>QWidget</extends>
+   <header location="global">flupasswordbox.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

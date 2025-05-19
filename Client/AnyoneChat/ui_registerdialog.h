@@ -9,19 +9,20 @@
 #ifndef UI_REGISTERDIALOG_H
 #define UI_REGISTERDIALOG_H
 
+#include <FluButton.h>
+#include <FluTextBox.h>
 #include <QtCore/QVariant>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QDialog>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QLabel>
-#include <QtWidgets/QLineEdit>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QSpacerItem>
 #include <QtWidgets/QStackedWidget>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
+#include <flupasswordbox.h>
 #include <timerbtn.h>
-#include "clickedlabel.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -36,29 +37,26 @@ public:
     QSpacerItem *verticalSpacer;
     QWidget *widget;
     QVBoxLayout *verticalLayout_4;
-    QLabel *err_tip;
     QHBoxLayout *horizontalLayout;
     QLabel *user_label;
-    QLineEdit *user_edit;
+    FluTextBox *user_edit;
     QHBoxLayout *horizontalLayout_3;
     QLabel *email_label;
-    QLineEdit *email_edit;
+    FluTextBox *email_edit;
     QHBoxLayout *horizontalLayout_4;
     QLabel *pass_label;
-    QLineEdit *pass_edit;
-    ClickedLabel *pass_visible;
+    FluPasswordBox *pass_edit;
     QHBoxLayout *horizontalLayout_5;
     QLabel *confirm_label;
-    QLineEdit *confirm_edit;
-    ClickedLabel *confirm_visible;
+    FluPasswordBox *confirm_edit;
     QHBoxLayout *horizontalLayout_6;
     QLabel *varify_label;
-    QLineEdit *varify_edit;
+    FluTextBox *varify_edit;
     TimerBtn *get_code;
     QSpacerItem *verticalSpacer_2;
     QHBoxLayout *horizontalLayout_7;
-    QPushButton *sure_btn;
-    QPushButton *cancel_btn;
+    FluButton *sure_btn;
+    FluButton *cancel_btn;
     QSpacerItem *verticalSpacer_3;
     QWidget *page_2;
     QVBoxLayout *verticalLayout_5;
@@ -96,14 +94,9 @@ public:
 
         widget = new QWidget(page);
         widget->setObjectName(QString::fromUtf8("widget"));
+        widget->setMinimumSize(QSize(0, 25));
         verticalLayout_4 = new QVBoxLayout(widget);
         verticalLayout_4->setObjectName(QString::fromUtf8("verticalLayout_4"));
-        err_tip = new QLabel(widget);
-        err_tip->setObjectName(QString::fromUtf8("err_tip"));
-        err_tip->setAlignment(Qt::AlignCenter);
-
-        verticalLayout_4->addWidget(err_tip);
-
 
         verticalLayout_3->addWidget(widget);
 
@@ -116,7 +109,7 @@ public:
 
         horizontalLayout->addWidget(user_label);
 
-        user_edit = new QLineEdit(page);
+        user_edit = new FluTextBox(page);
         user_edit->setObjectName(QString::fromUtf8("user_edit"));
         user_edit->setMinimumSize(QSize(0, 25));
         user_edit->setMaximumSize(QSize(16777215, 25));
@@ -135,7 +128,7 @@ public:
 
         horizontalLayout_3->addWidget(email_label);
 
-        email_edit = new QLineEdit(page);
+        email_edit = new FluTextBox(page);
         email_edit->setObjectName(QString::fromUtf8("email_edit"));
         email_edit->setMinimumSize(QSize(0, 25));
         email_edit->setMaximumSize(QSize(16777215, 25));
@@ -154,20 +147,12 @@ public:
 
         horizontalLayout_4->addWidget(pass_label);
 
-        pass_edit = new QLineEdit(page);
+        pass_edit = new FluPasswordBox(page);
         pass_edit->setObjectName(QString::fromUtf8("pass_edit"));
         pass_edit->setMinimumSize(QSize(0, 25));
         pass_edit->setMaximumSize(QSize(16777215, 25));
 
         horizontalLayout_4->addWidget(pass_edit);
-
-        pass_visible = new ClickedLabel(page);
-        pass_visible->setObjectName(QString::fromUtf8("pass_visible"));
-        pass_visible->setMinimumSize(QSize(20, 20));
-        pass_visible->setMaximumSize(QSize(20, 20));
-        pass_visible->setStyleSheet(QString::fromUtf8(""));
-
-        horizontalLayout_4->addWidget(pass_visible);
 
 
         verticalLayout_3->addLayout(horizontalLayout_4);
@@ -181,20 +166,12 @@ public:
 
         horizontalLayout_5->addWidget(confirm_label);
 
-        confirm_edit = new QLineEdit(page);
+        confirm_edit = new FluPasswordBox(page);
         confirm_edit->setObjectName(QString::fromUtf8("confirm_edit"));
         confirm_edit->setMinimumSize(QSize(0, 25));
         confirm_edit->setMaximumSize(QSize(16777215, 25));
 
         horizontalLayout_5->addWidget(confirm_edit);
-
-        confirm_visible = new ClickedLabel(page);
-        confirm_visible->setObjectName(QString::fromUtf8("confirm_visible"));
-        confirm_visible->setMinimumSize(QSize(20, 20));
-        confirm_visible->setMaximumSize(QSize(20, 20));
-        confirm_visible->setStyleSheet(QString::fromUtf8(""));
-
-        horizontalLayout_5->addWidget(confirm_visible);
 
 
         verticalLayout_3->addLayout(horizontalLayout_5);
@@ -208,7 +185,7 @@ public:
 
         horizontalLayout_6->addWidget(varify_label);
 
-        varify_edit = new QLineEdit(page);
+        varify_edit = new FluTextBox(page);
         varify_edit->setObjectName(QString::fromUtf8("varify_edit"));
         varify_edit->setMinimumSize(QSize(0, 25));
         varify_edit->setMaximumSize(QSize(16777215, 25));
@@ -231,14 +208,14 @@ public:
 
         horizontalLayout_7 = new QHBoxLayout();
         horizontalLayout_7->setObjectName(QString::fromUtf8("horizontalLayout_7"));
-        sure_btn = new QPushButton(page);
+        sure_btn = new FluButton(page);
         sure_btn->setObjectName(QString::fromUtf8("sure_btn"));
         sure_btn->setMinimumSize(QSize(0, 25));
         sure_btn->setMaximumSize(QSize(16777215, 25));
 
         horizontalLayout_7->addWidget(sure_btn);
 
-        cancel_btn = new QPushButton(page);
+        cancel_btn = new FluButton(page);
         cancel_btn->setObjectName(QString::fromUtf8("cancel_btn"));
         cancel_btn->setMinimumSize(QSize(0, 25));
         cancel_btn->setMaximumSize(QSize(16777215, 25));
@@ -322,13 +299,10 @@ public:
     void retranslateUi(QDialog *RegisterDialog)
     {
         RegisterDialog->setWindowTitle(QCoreApplication::translate("RegisterDialog", "Dialog", nullptr));
-        err_tip->setText(QCoreApplication::translate("RegisterDialog", "\351\224\231\350\257\257\346\217\220\347\244\272", nullptr));
         user_label->setText(QCoreApplication::translate("RegisterDialog", "\347\224\250\346\210\267\357\274\232", nullptr));
         email_label->setText(QCoreApplication::translate("RegisterDialog", "\351\202\256\347\256\261\357\274\232", nullptr));
         pass_label->setText(QCoreApplication::translate("RegisterDialog", "\345\257\206\347\240\201\357\274\232", nullptr));
-        pass_visible->setText(QString());
         confirm_label->setText(QCoreApplication::translate("RegisterDialog", "\347\241\256\350\256\244\357\274\232", nullptr));
-        confirm_visible->setText(QString());
         varify_label->setText(QCoreApplication::translate("RegisterDialog", "\351\252\214\350\257\201\347\240\201\357\274\232", nullptr));
         get_code->setText(QCoreApplication::translate("RegisterDialog", "\350\216\267\345\217\226", nullptr));
         sure_btn->setText(QCoreApplication::translate("RegisterDialog", "\347\241\256\350\256\244", nullptr));

@@ -93,7 +93,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="email_edit">
+        <widget class="FluTextBox" name="email_edit" native="true">
          <property name="minimumSize">
           <size>
            <width>0</width>
@@ -105,12 +105,6 @@
            <width>16777215</width>
            <height>30</height>
           </size>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-         <property name="placeholderText">
-          <string>输入邮箱</string>
          </property>
         </widget>
        </item>
@@ -154,7 +148,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="pass_edit">
+        <widget class="FluPasswordBox" name="pass_edit" native="true">
          <property name="minimumSize">
           <size>
            <width>0</width>
@@ -167,32 +161,23 @@
            <height>30</height>
           </size>
          </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-         <property name="placeholderText">
-          <string>输入密码</string>
-         </property>
         </widget>
        </item>
        <item>
-        <widget class="ClickedLabel" name="pass_visible">
-         <property name="minimumSize">
+        <spacer name="horizontalSpacer_8">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Fixed</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
           <size>
-           <width>20</width>
+           <width>25</width>
            <height>20</height>
           </size>
          </property>
-         <property name="maximumSize">
-          <size>
-           <width>20</width>
-           <height>20</height>
-          </size>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
+        </spacer>
        </item>
       </layout>
      </item>
@@ -272,7 +257,7 @@
         </spacer>
        </item>
        <item>
-        <widget class="QPushButton" name="login_btn">
+        <widget class="FluButton" name="login_btn">
          <property name="minimumSize">
           <size>
            <width>100</width>
@@ -320,7 +305,24 @@
   <customwidget>
    <class>ClickedLabel</class>
    <extends>QLabel</extends>
-   <header>clickedlabel.h</header>
+   <header location="global">clickedlabel.h</header>
+  </customwidget>
+  <customwidget>
+   <class>FluButton</class>
+   <extends>QPushButton</extends>
+   <header location="global">FluButton.h</header>
+  </customwidget>
+  <customwidget>
+   <class>FluTextBox</class>
+   <extends>QWidget</extends>
+   <header location="global">FluTextBox.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>FluPasswordBox</class>
+   <extends>QWidget</extends>
+   <header location="global">flupasswordbox.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

@@ -1,10 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>style/stylesheet.qss</file>
-        <file>res/unvisible.png</file>
         <file>res/visible.png</file>
-        <file>res/unvisible_hover.png</file>
-        <file>res/visible_hover.png</file>
         <file>res/add_friend_hover.png</file>
         <file>res/add_friend_normal.png</file>
         <file>res/search.png</file>

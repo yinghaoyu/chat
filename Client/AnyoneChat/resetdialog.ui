@@ -72,7 +72,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="user_edit">
+       <widget class="FluTextBox" name="user_edit" native="true">
         <property name="minimumSize">
          <size>
           <width>0</width>
@@ -113,7 +113,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="email_edit">
+       <widget class="FluTextBox" name="email_edit" native="true">
         <property name="minimumSize">
          <size>
           <width>0</width>
@@ -154,7 +154,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="varify_edit">
+       <widget class="FluTextBox" name="varify_edit" native="true">
         <property name="minimumSize">
          <size>
           <width>0</width>
@@ -214,7 +214,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="pwd_edit">
+       <widget class="FluPasswordBox" name="pwd_edit" native="true">
         <property name="minimumSize">
          <size>
           <width>0</width>
@@ -249,7 +249,7 @@
     <widget class="QWidget" name="widget_5" native="true">
      <layout class="QHBoxLayout" name="horizontalLayout_5">
       <item>
-       <widget class="QPushButton" name="sure_btn">
+       <widget class="FluButton" name="sure_btn">
         <property name="minimumSize">
          <size>
           <width>0</width>
@@ -268,7 +268,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="return_btn">
+       <widget class="FluButton" name="return_btn">
         <property name="minimumSize">
          <size>
           <width>0</width>
@@ -305,6 +305,11 @@
   </layout>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>FluButton</class>
+   <extends>QPushButton</extends>
+   <header location="global">FluButton.h</header>
+  </customwidget>
   <customwidget>
    <class>TimerBtn</class>
    <extends>QPushButton</extends>

@@ -54,16 +54,6 @@ enum Modules{
     LOGINMOD = 2,
 };
 
-enum TipErr{
-    TIP_SUCCESS = 0,
-    TIP_EMAIL_ERR = 1,
-    TIP_USER_ERR = 3,
-    TIP_PWD_ERR = 4,
-    TIP_CONFIRM_ERR = 5,
-    TIP_PWD_CONFIRM = 6,
-    TIP_VARIFY_ERR = 7,
-};
-
 enum ClickLbState{
     Normal = 0,
     Selected = 1

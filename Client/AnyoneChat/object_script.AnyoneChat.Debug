@@ -1,6 +1,9 @@
 debug/BubbleFrame.o
 debug/ChatItemBase.o
 debug/ChatView.o
+debug/FluButton.o
+debug/FluPasswordBox.o
+debug/FluTextBox.o
 debug/MessageTextEdit.o
 debug/PictureBubble.o
 debug/TextBubble.o
@@ -51,6 +54,9 @@ debug/qrc_rc.o
 debug/moc_BubbleFrame.o
 debug/moc_ChatItemBase.o
 debug/moc_ChatView.o
+debug/moc_FluButton.o
+debug/moc_FluPasswordBox.o
+debug/moc_FluTextBox.o
 debug/moc_MessageTextEdit.o
 debug/moc_PictureBubble.o
 debug/moc_TextBubble.o
