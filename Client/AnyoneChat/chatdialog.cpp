@@ -4,6 +4,7 @@
 #include "chatuserwid.h"
 #include <QDebug>
 #include <vector>
+#include <QDesktopWidget>
 #include <QRandomGenerator>
 #include "loadingdlg.h"
 #include "global.h"
@@ -66,6 +67,9 @@ ChatDialog::ChatDialog(QWidget *parent) :
 
     //连接加载信号和槽
     connect(ui->chat_user_list, &ChatUserList::sig_loading_chat_user, this, &ChatDialog::slot_loading_chat_user);
+
+    connect(ui->chat_user_list, &QListWidget::itemDoubleClicked, this, &ChatDialog::slot_chat_user_double_clicked);
+
     addChatUserList();
     //模拟加载自己头像
     QString head_icon = UserMgr::GetInstance()->GetIcon();
@@ -228,6 +232,59 @@ void ChatDialog::slot_item_clicked(QListWidgetItem *item)
        _cur_chat_uid = user_info->_uid;
        return;
    }
+}
+
+void ChatDialog::slot_chat_user_double_clicked(QListWidgetItem* item)
+{
+    QWidget* widget = ui->chat_user_list->itemWidget(item);
+    if (!widget) return;
+
+    auto customItem = qobject_cast<ListItemBase*>(widget);
+    if (!customItem) return;
+
+    if (customItem->GetItemType() == CHAT_USER_ITEM) {
+        auto chat_wid = qobject_cast<ChatUserWid*>(customItem);
+        if (!chat_wid) return;
+        auto user_info = chat_wid->GetUserInfo();
+        int uid = user_info->_uid;
+
+        ChatPage* page = _chat_pages[uid];
+        // 如果已经是弹窗状态，直接激活
+        if (page->isWindow()) {
+            page->activateWindow();
+            page->raise();
+            return;
+        }
+
+        ui->stackedWidget->removeWidget(page);
+        ui->stackedWidget->setCurrentWidget(ui->chat_page);
+        page->setParent(nullptr);
+        page->setAttribute(Qt::WA_DeleteOnClose, false); // 不自动销毁
+        page->setWindowTitle(tr(""));
+        page->resize(600, 700);
+        // 移动到屏幕中心
+        QRect screenRect = QApplication::desktop()->screenGeometry();
+        int x = screenRect.center().x() - page->width() / 2;
+        int y = screenRect.center().y() - page->height() / 2;
+        page->move(x, y);
+        page->show();
+
+        // 监听弹窗关闭事件，关闭时还原到主窗口
+        connect(page, &ChatPage::sig_window_close, this, [=]() {
+            page->hide();
+            page->setParent(ui->stackedWidget);
+            page->setWindowFlags(Qt::Widget);
+            page->show();
+            if (ui->stackedWidget->indexOf(page) == -1)
+            {
+                ui->stackedWidget->addWidget(page);
+            }
+            // Notice: 这里需要延迟更新才能显示页面
+            QTimer::singleShot(0, this, [=]() {
+                ui->stackedWidget->setCurrentWidget(page);
+            });
+        });
+    }
 }
 
 void ChatDialog::slot_text_chat_msg(std::shared_ptr<TextChatMsg> msg)

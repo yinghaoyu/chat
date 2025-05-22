@@ -18,7 +18,8 @@ public:
     void SetUserInfo(std::shared_ptr<UserInfo> user_info);
     void AppendChatMsg(std::shared_ptr<TextChatData> msg);
 protected:
-    void paintEvent(QPaintEvent *event);
+    void paintEvent(QPaintEvent *event) override;
+    void closeEvent(QCloseEvent* event) override;
 private slots:
     void on_send_btn_clicked();
 
@@ -30,6 +31,7 @@ private:
     std::shared_ptr<UserInfo> _user_info;
     QMap<QString, QWidget*>  _bubble_map;
 signals:
+    void sig_window_close();
     void sig_append_send_chat_msg(std::shared_ptr<TextChatData> msg);
 };
 
