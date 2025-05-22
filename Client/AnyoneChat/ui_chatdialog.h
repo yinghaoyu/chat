@@ -19,7 +19,6 @@
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
 #include <applyfriendpage.h>
-#include <chatpage.h>
 #include <contactuserlist.h>
 #include <friendinfopage.h>
 #include <statewidget.h>
@@ -56,7 +55,7 @@ public:
     ChatUserList *chat_user_list;
     ContactUserList *con_user_list;
     QStackedWidget *stackedWidget;
-    ChatPage *chat_page;
+    QWidget *chat_page;
     ApplyFriendPage *friend_apply_page;
     FriendInfoPage *friend_info_page;
     UserInfoPage *user_info_page;
@@ -199,7 +198,7 @@ public:
         stackedWidget = new QStackedWidget(ChatDialog);
         stackedWidget->setObjectName(QString::fromUtf8("stackedWidget"));
         stackedWidget->setMinimumSize(QSize(50, 0));
-        chat_page = new ChatPage();
+        chat_page = new QWidget();
         chat_page->setObjectName(QString::fromUtf8("chat_page"));
         stackedWidget->addWidget(chat_page);
         friend_apply_page = new ApplyFriendPage();
@@ -217,7 +216,7 @@ public:
 
         retranslateUi(ChatDialog);
 
-        stackedWidget->setCurrentIndex(1);
+        stackedWidget->setCurrentIndex(0);
 
 
         QMetaObject::connectSlotsByName(ChatDialog);

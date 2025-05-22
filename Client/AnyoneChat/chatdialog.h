@@ -1,14 +1,16 @@
 #ifndef CHATDIALOG_H
 #define CHATDIALOG_H
 
-#include <QDialog>
-#include <QLabel>
-#include <QList>
 #include "statelabel.h"
 #include "global.h"
 #include "statewidget.h"
-#include <memory>
 #include "userdata.h"
+#include "chatpage.h"
+
+#include <QDialog>
+#include <QLabel>
+#include <QList>
+#include <memory>
 #include <QListWidgetItem>
 
 namespace Ui {
@@ -44,8 +46,8 @@ private:
     ChatUIMode _mode;
     ChatUIMode _state;
     QWidget* _last_widget;
-    //todo...
     QMap<int, QListWidgetItem*> _chat_items_added;
+    QMap<int, ChatPage*> _chat_pages; // uid -> ChatPage*
     int _cur_chat_uid;
     QTimer * _timer;
 public slots:

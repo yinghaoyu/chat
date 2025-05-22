@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include "resetdialog.h"
 #include "tcpmgr.h"
+#include "usermgr.h"
 #include <QLayout>
 #include <QMessageBox>
 
@@ -132,6 +133,7 @@ void MainWindow::offlineLogin(){
     if(_ui_status == LOGIN_UI){
         return;
     }
+    UserMgr::GetInstance()->CleanAllInfo();
     //创建一个CentralWidget, 并将其设置为MainWindow的中心部件
     _login_dlg = new LoginDialog(this);
     _login_dlg->setWindowFlags(Qt::CustomizeWindowHint|Qt::FramelessWindowHint);

@@ -102,9 +102,9 @@ ChatDialog::ChatDialog(QWidget *parent) :
     //设置聊天label选中状态
     ui->side_chat_lb->SetSelected(true);
     //设置选中条目
-    SetSelectChatItem();
+    //SetSelectChatItem();
     //更新聊天界面信息
-    SetSelectChatPage();
+    //SetSelectChatPage();
 
     //连接加载联系人的信号和槽函数
     connect(ui->con_user_list, &ContactUserList::sig_loading_contact_user,
@@ -135,7 +135,7 @@ ChatDialog::ChatDialog(QWidget *parent) :
             this,&ChatDialog::slot_friend_info_page);
 
     //设置中心部件为chatpage
-    ui->stackedWidget->setCurrentWidget(ui->chat_page);
+    //ui->stackedWidget->setCurrentWidget(ui->chat_page);
 
 
     //连接searchlist跳转聊天信号
@@ -152,10 +152,10 @@ ChatDialog::ChatDialog(QWidget *parent) :
     connect(TcpMgr::GetInstance().get(), &TcpMgr::sig_text_chat_msg,
             this, &ChatDialog::slot_text_chat_msg);
 
-    connect(ui->chat_page, &ChatPage::sig_append_send_chat_msg, this, &ChatDialog::slot_append_send_chat_msg);
+    //connect(ui->chat_page, &ChatPage::sig_append_send_chat_msg, this, &ChatDialog::slot_append_send_chat_msg);
 
     _timer = new QTimer(this);
-    connect(_timer, &QTimer::timeout, this, [this](){
+    connect(_timer, &QTimer::timeout, this, [](){
             auto user_info = UserMgr::GetInstance()->GetUserInfo();
             QJsonObject textObj;
             textObj["fromuid"] = user_info->_uid;
@@ -205,7 +205,19 @@ void ChatDialog::slot_item_clicked(QListWidgetItem *item)
        auto chat_wid = qobject_cast<ChatUserWid*>(customItem);
        auto user_info = chat_wid->GetUserInfo();
        //跳转到聊天界面
-       ui->chat_page->SetUserInfo(user_info);
+       // ui->chat_page->SetUserInfo(user_info);
+       // _cur_chat_uid = user_info->_uid;
+       if (_cur_chat_uid == user_info->_uid)
+       {
+           return;
+       }
+       // 隐藏当前页面
+       if (_cur_chat_uid && _chat_pages.contains(_cur_chat_uid)) {
+           _chat_pages[_cur_chat_uid]->hide();
+       }
+       ChatPage* page = _chat_pages[user_info->_uid];
+       ui->stackedWidget->setCurrentWidget(page);
+       page->show();
        _cur_chat_uid = user_info->_uid;
        return;
    }
@@ -281,11 +293,12 @@ void ChatDialog::CloseFindDlg()
 void ChatDialog::UpdateChatMsg(std::vector<std::shared_ptr<TextChatData> > msgdata)
 {
     for(auto & msg : msgdata){
-        if(msg->_from_uid != _cur_chat_uid){
-            break;
-        }
+        // if(msg->_from_uid != _cur_chat_uid){
+        //     break;
+        // }
 
-        ui->chat_page->AppendChatMsg(msg);
+        //ui->chat_page->AppendChatMsg(msg);
+        _chat_pages[msg->_from_uid]->AppendChatMsg(msg);
     }
 }
 
@@ -363,31 +376,18 @@ void ChatDialog::addChatUserList()
             ui->chat_user_list->addItem(item);
             ui->chat_user_list->setItemWidget(item, chat_user_wid);
             _chat_items_added.insert(friend_ele->_uid, item);
+
+            // 每一个user都有独立的chatpage
+            ChatPage* page = new ChatPage(this);
+            page->SetUserInfo(user_info);
+            ui->stackedWidget->addWidget(page);
+            _chat_pages[user_info->_uid] = page;
+            connect(page, &ChatPage::sig_append_send_chat_msg, this, &ChatDialog::slot_append_send_chat_msg);
         }
 
         //更新已加载条目
         UserMgr::GetInstance()->UpdateChatLoadedCount();
     }
-
-    //模拟测试条目
-    // 创建QListWidgetItem，并设置自定义的widget
-    // for(int i = 0; i < 13; i++){
-    //     int randomValue = QRandomGenerator::global()->bounded(100); // 生成0到99之间的随机整数
-    //     int str_i = randomValue%strs.size();
-    //     int head_i = randomValue%heads.size();
-    //     int name_i = randomValue%names.size();
-
-    //     auto *chat_user_wid = new ChatUserWid();
-    //     auto user_info = std::make_shared<UserInfo>(0,names[name_i],
-    //                                                 names[name_i],heads[head_i],0,strs[str_i]);
-    //     chat_user_wid->SetInfo(user_info);
-    //     QListWidgetItem *item = new QListWidgetItem;
-    //     //qDebug()<<"chat_user_wid sizeHint is " << chat_user_wid->sizeHint();
-    //     item->setSizeHint(chat_user_wid->sizeHint());
-    //     ui->chat_user_list->addItem(item);
-    //     ui->chat_user_list->setItemWidget(item, chat_user_wid);
-    // }
-
 }
 
 void ChatDialog::loadMoreChatUser() {
@@ -508,7 +508,19 @@ void ChatDialog::SetSelectChatPage(int uid)
 
        //设置信息
        auto user_info = con_item->GetUserInfo();
-       ui->chat_page->SetUserInfo(user_info);
+       //ui->chat_page->SetUserInfo(user_info);
+       if (_cur_chat_uid == user_info->_uid)
+       {
+           return;
+       }
+       // 隐藏当前页面
+       if (_cur_chat_uid && _chat_pages.contains(_cur_chat_uid)) {
+           _chat_pages[_cur_chat_uid]->hide();
+       }
+       ChatPage* page = _chat_pages[user_info->_uid];
+       ui->stackedWidget->setCurrentWidget(page);
+       page->show();
+       _cur_chat_uid = user_info->_uid;
        return;
     }
 
@@ -540,11 +552,31 @@ void ChatDialog::SetSelectChatPage(int uid)
 
         //设置信息
         auto user_info = con_item->GetUserInfo();
-        ui->chat_page->SetUserInfo(user_info);
+        //ui->chat_page->SetUserInfo(user_info);
+        if (_cur_chat_uid == user_info->_uid)
+        {
+            return;
+        }
+        // 隐藏当前页面
+        if (_cur_chat_uid && _chat_pages.contains(_cur_chat_uid)) {
+            _chat_pages[_cur_chat_uid]->hide();
+        }
+        ChatPage* page = nullptr;
+        if (!_chat_pages.contains(user_info->_uid)) {
+            // 新建并初始化
+            page = new ChatPage(this);
+            page->SetUserInfo(user_info);
+            ui->stackedWidget->addWidget(page); // 假设 stackedWidget 用于切换页面
+            _chat_pages[user_info->_uid] = page;
+        } else {
+            page = _chat_pages[user_info->_uid];
+        }
 
+        ui->stackedWidget->setCurrentWidget(page);
+        page->show();
+        _cur_chat_uid = user_info->_uid;
         return;
     }
-
 }
 
 
@@ -604,7 +636,8 @@ void ChatDialog::slot_side_chat()
 {
     qDebug()<< "receive side chat clicked";
     ClearLabelState(ui->side_chat_lb);
-    ui->stackedWidget->setCurrentWidget(ui->chat_page);
+    //ui->stackedWidget->setCurrentWidget(ui->chat_page);
+    ui->stackedWidget->setCurrentWidget(_chat_pages[_cur_chat_uid]);
     _state = ChatUIMode::ChatMode;
     ShowSearch(false);
 }

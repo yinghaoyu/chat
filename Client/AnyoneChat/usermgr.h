@@ -36,6 +36,7 @@ public:
     void AddFriend(std::shared_ptr<AuthInfo> auth_info);
     std::shared_ptr<FriendInfo> GetFriendById(int uid);
     void AppendFriendChatMsg(int friend_id,std::vector<std::shared_ptr<TextChatData>>);
+    void CleanAllInfo();
 private:
     UserMgr();
     std::shared_ptr<UserInfo> _user_info;

@@ -12,13 +12,6 @@ TcpMgr::TcpMgr():_host(""),_port(0),_b_recv_pending(false),_message_id(0),_messa
 
        QObject::connect(&_socket, &QTcpSocket::readyRead, [&]() {
             QByteArray data = _socket.readAll();
-            if(data.isEmpty())
-            {
-                qDebug() << "Server shutdownWrite!";
-                _socket.close();
-                emit sig_connection_closed();
-                return;
-            }
            // 当有数据可读时，读取所有数据
            // 读取所有数据并追加到缓冲区
            _buffer.append(std::move(data));

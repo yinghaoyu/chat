@@ -143,9 +143,9 @@ std::vector<std::shared_ptr<FriendInfo>> UserMgr::GetConListPerPage() {
 }
 
 
-UserMgr::UserMgr():_user_info(nullptr), _chat_loaded(0),_contact_loaded(0)
+UserMgr::UserMgr()
 {
-
+    CleanAllInfo();
 }
 
 void UserMgr::SlotAddFriendRsp(std::shared_ptr<AuthRsp> rsp)
@@ -248,6 +248,17 @@ void UserMgr::AppendFriendChatMsg(int friend_id,std::vector<std::shared_ptr<Text
     }
 
     find_iter.value()->AppendChatMsgs(msgs);
+}
+
+void UserMgr::CleanAllInfo()
+{
+    _user_info.reset();
+    _apply_list.clear();
+    _friend_list.clear();
+    _friend_map.clear();
+    _token.clear();
+    _chat_loaded = 0;
+    _contact_loaded = 0;
 }
 
 
