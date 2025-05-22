@@ -108,7 +108,10 @@ void LoginDialog::initHttpHandlers()
     //注册获取登录回包逻辑
     _handlers.insert(ReqId::ID_LOGIN_USER, [this](QJsonObject jsonObj){
         int error = jsonObj["error"].toInt();
-        enableOperation(true);
+        if(error != ErrorCodes::Success)
+        {
+            enableOperation(true);
+        }
         switch(error)
         {
             case ErrorCodes::Success:
@@ -201,7 +204,7 @@ bool LoginDialog::enableOperation(bool enabled)
 {
     ui->email_edit->setEnabled(enabled);
     ui->pass_edit->setEnabled(enabled);
-    ui->login_btn->setEnabled(enabled);
+    ui->login_btn->setDisabled(!enabled);
     return true;
 }
 
