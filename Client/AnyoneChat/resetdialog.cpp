@@ -195,7 +195,7 @@ void ResetDialog::initHandlers()
             case ErrorCodes::Error_Json:
                 showTip(tr("服务器json解析错误"));
                 break;
-            default: showTip(tr("参数错误")); break;
+            default: showTip(tr("未知错误")); break;
         }
     });
 
@@ -231,7 +231,7 @@ void ResetDialog::initHandlers()
             case ErrorCodes::PasswdUpFailed:
                 showTip(tr("服务器数据库错误，更新密码失败"));
                 break;
-            default: showTip(tr("参数错误")); break;
+            default: showTip(tr("未知错误")); break;
         }
     });
 }

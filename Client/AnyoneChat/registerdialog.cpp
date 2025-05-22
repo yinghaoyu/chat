@@ -240,7 +240,7 @@ void RegisterDialog::initHttpHandlers()
             case ErrorCodes::Error_Json:
                 showTip(tr("服务器json解析错误"));
                 break;
-            default: showTip(tr("参数错误")); break;
+            default: showTip(tr("未知错误")); break;
         }
     });
 
@@ -274,7 +274,7 @@ void RegisterDialog::initHttpHandlers()
             case ErrorCodes::UserExist:
                 showTip(tr("用户已存在"));
                 break;
-            default: showTip(tr("参数错误")); break;
+            default: showTip(tr("未知错误")); break;
             }
     });
 }

@@ -140,7 +140,7 @@ void LoginDialog::initHttpHandlers()
             case ErrorCodes::RPCFailed:
                 showTip(tr("获取聊天服务器ip失败"));
                 break;
-            default: showTip(tr("参数错误")); break;
+            default: showTip(tr("未知错误")); break;
         }
     });
 }
@@ -282,8 +282,19 @@ void LoginDialog::slot_tcp_con_finish(bool bsuccess)
 
 void LoginDialog::slot_login_failed(int err)
 {
-    QString result = QString("登录失败, err is %1")
-                             .arg(err);
-    showTip(result);
+    switch (err) {
+        case ErrorCodes::Error_Json:
+            showTip(tr("服务器json解析错误"));
+            break;
+        case ErrorCodes::UidInvalid:
+            showTip(tr("用户或Token不存在"));
+            break;
+        case ErrorCodes::TokenInvalid:
+            showTip(tr("用户Token错误"));
+            break;
+        default:
+            showTip(tr("未知错误"));
+            break;
+    }
     enableOperation(true);
 }
