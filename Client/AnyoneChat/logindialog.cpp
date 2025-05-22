@@ -108,25 +108,37 @@ void LoginDialog::initHttpHandlers()
     //注册获取登录回包逻辑
     _handlers.insert(ReqId::ID_LOGIN_USER, [this](QJsonObject jsonObj){
         int error = jsonObj["error"].toInt();
-        if(error != ErrorCodes::Success){
-            showTip(tr("参数错误"));
-            enableOperation(true);
-            return;
+        enableOperation(true);
+        switch(error)
+        {
+            case ErrorCodes::Success:
+            {
+                auto email = jsonObj["email"].toString();
+                //发送信号通知tcpMgr发送长链接
+                ServerInfo si;
+                si.Uid = jsonObj["uid"].toInt();
+                si.Host = jsonObj["host"].toString();
+                si.Port = jsonObj["port"].toString();
+                si.Token = jsonObj["token"].toString();
+
+                _uid = si.Uid;
+                _token = si.Token;
+                qDebug()<< "email is " << email << " uid is " << si.Uid <<" host is "
+                         << si.Host << " Port is " << si.Port << " Token is " << si.Token;
+                emit sig_connect_tcp(si);
+                break;
+            }
+            case ErrorCodes::Error_Json:
+                showTip(tr("服务器json解析错误"));
+                break;
+            case ErrorCodes::PasswdInvalid:
+                showTip(tr("邮箱或密码错误"));
+                break;
+            case ErrorCodes::RPCFailed:
+                showTip(tr("获取聊天服务器ip失败"));
+                break;
+            default: showTip(tr("参数错误")); break;
         }
-        auto email = jsonObj["email"].toString();
-
-        //发送信号通知tcpMgr发送长链接
-        ServerInfo si;
-        si.Uid = jsonObj["uid"].toInt();
-        si.Host = jsonObj["host"].toString();
-        si.Port = jsonObj["port"].toString();
-        si.Token = jsonObj["token"].toString();
-
-        _uid = si.Uid;
-        _token = si.Token;
-        qDebug()<< "email is " << email << " uid is " << si.Uid <<" host is "
-                << si.Host << " Port is " << si.Port << " Token is " << si.Token;
-        emit sig_connect_tcp(si);
     });
 }
 

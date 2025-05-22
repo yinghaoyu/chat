@@ -305,7 +305,7 @@
   <customwidget>
    <class>ClickedLabel</class>
    <extends>QLabel</extends>
-   <header location="global">clickedlabel.h</header>
+   <header>clickedlabel.h</header>
   </customwidget>
   <customwidget>
    <class>FluButton</class>

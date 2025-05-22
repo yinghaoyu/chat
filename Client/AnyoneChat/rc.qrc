@@ -52,5 +52,6 @@
         <file>res/settings_hover.png</file>
         <file>res/email.png</file>
         <file>res/passwd.png</file>
+        <file>res/chat_bg.png</file>
     </qresource>
 </RCC>

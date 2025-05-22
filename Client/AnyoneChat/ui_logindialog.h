@@ -20,8 +20,8 @@
 #include <QtWidgets/QSpacerItem>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
-#include <clickedlabel.h>
 #include <flupasswordbox.h>
+#include "clickedlabel.h"
 
 QT_BEGIN_NAMESPACE
 

@@ -136,7 +136,14 @@ ChatDialog::ChatDialog(QWidget *parent) :
 
     //设置中心部件为chatpage
     //ui->stackedWidget->setCurrentWidget(ui->chat_page);
-
+    // 设置默认聊天窗口背景
+    QPixmap chat_pm(QString(":/res/chat_bg.png"));
+    QLabel *imageLabel = new QLabel(ui->chat_page);
+    QVBoxLayout *layout = new QVBoxLayout(this);
+    imageLabel->setAlignment(Qt::AlignCenter);
+    imageLabel->setPixmap(chat_pm.scaled(128, 128, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    layout->addWidget(imageLabel);
+    ui->chat_page->setLayout(layout);
 
     //连接searchlist跳转聊天信号
     connect(ui->search_list, &SearchList::sig_jump_chat_item, this, &ChatDialog::slot_jump_chat_item);
