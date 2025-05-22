@@ -4,8 +4,12 @@
 /Client/AnyoneChat/bin
 /Client/AnyoneChat/debug
 /Client/AnyoneChat/release
-/Client/AnyoneChat/build
+/Client/AnyoneChat/.qtc_clangd
 /Client/AnyoneChat/.qmake.stash
+/Client/AnyoneChat/ui_*.h
+Makefile.Debug
+Makefile.Release
+
 /VarifyServer/node_modules
 /.clangd
 /.cache
