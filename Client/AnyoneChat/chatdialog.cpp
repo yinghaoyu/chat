@@ -1,24 +1,17 @@
 #include "chatdialog.h"
 #include "ui_chatdialog.h"
-#include <QAction>
 #include "chatuserwid.h"
+#include "loadingdlg.h"
+#include "global.h"
+#include "tcpmgr.h"
+#include "usermgr.h"
+#include "conuseritem.h"
+
+#include <QAction>
 #include <QDebug>
 #include <vector>
 #include <QDesktopWidget>
 #include <QRandomGenerator>
-#include "loadingdlg.h"
-#include "global.h"
-#include "ChatItemBase.h"
-#include "TextBubble.h"
-#include "PictureBubble.h"
-#include "MessageTextEdit.h"
-#include "chatuserlist.h"
-#include "grouptipitem.h"
-#include "invaliditem.h"
-#include "conuseritem.h"
-#include "lineitem.h"
-#include "tcpmgr.h"
-#include "usermgr.h"
 #include <QTimer>
 
 

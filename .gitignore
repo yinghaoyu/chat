@@ -10,6 +10,7 @@
 Makefile.Debug
 Makefile.Release
 
+Server/*/*.pb.*
 /VarifyServer/node_modules
 /.clangd
 /.cache

@@ -18,8 +18,6 @@ class RedisMgr : public Singleton<RedisMgr>,
     bool        RPop(const std::string& key, std::string& value);
     bool        HSet(const std::string& key, const std::string& hkey,
                const std::string& value);
-    bool        HSet(const char* key, const char* hkey, const char* hvalue,
-               size_t hvaluelen);
     std::string HGet(const std::string& key, const std::string& hkey);
     bool        HDel(const std::string& key, const std::string& field);
     bool        Del(const std::string& key);

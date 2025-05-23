@@ -223,38 +223,6 @@ bool RedisMgr::HSet(
     return true;
 }
 
-bool RedisMgr::HSet(
-    const char* key, const char* hkey, const char* hvalue, size_t hvaluelen)
-{
-    auto connect = con_pool_->get();
-    if (connect == nullptr)
-    {
-        return false;
-    }
-
-    auto reply = connect->cmd({"HSET", key, hkey, hvalue});
-
-    if (reply == nullptr)
-    {
-        std::cout << "Execut command [ HSet " << key << "  " << hkey << "  "
-                  << hvalue << " ] failure" << std::endl;
-
-        return false;
-    }
-
-    if (reply->type != REDIS_REPLY_INTEGER)
-    {
-        std::cout << "Execut command [ HSet " << key << "  " << hkey << "  "
-                  << hvalue << " ] failure" << std::endl;
-
-        return false;
-    }
-    std::cout << "Execut command [ HSet " << key << "  " << hkey << "  "
-              << hvalue << " ] success" << std::endl;
-
-    return true;
-}
-
 std::string RedisMgr::HGet(const std::string& key, const std::string& hkey)
 {
     auto connect = con_pool_->get();

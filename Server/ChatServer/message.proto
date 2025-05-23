@@ -59,18 +59,6 @@ message AddFriendRsp {
 	int32 touid = 3;
 }
 
-message RplyFriendReq {
-	int32 rplyuid = 1;
-	bool  agree = 2;
-	int32 touid = 3;
-}
-
-message RplyFriendRsp {
-	int32 error = 1;
-	int32 rplyuid = 2;
-	int32 touid = 3;
-}
-
 message SendChatMsgReq{
 		int32 fromuid = 1;
 		int32 touid = 2;
@@ -123,7 +111,6 @@ message KickUserRsp{
 
 service ChatService {
 	rpc NotifyAddFriend(AddFriendReq) returns (AddFriendRsp) {}
-	rpc RplyAddFriend(RplyFriendReq) returns (RplyFriendRsp) {}
 	rpc SendChatMsg(SendChatMsgReq) returns (SendChatMsgRsp) {}
 	rpc NotifyAuthFriend(AuthFriendReq) returns (AuthFriendRsp) {}
 	rpc NotifyTextChatMsg(TextChatMsgReq) returns (TextChatMsgRsp){}
