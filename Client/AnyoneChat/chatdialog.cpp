@@ -464,6 +464,16 @@ void ChatDialog::loadMoreChatUser() {
             ui->chat_user_list->addItem(item);
             ui->chat_user_list->setItemWidget(item, chat_user_wid);
             _chat_items_added.insert(friend_ele->_uid, item);
+
+            if(!_chat_pages.count(user_info->_uid))
+            {
+                // 每一个user都有独立的chatpage
+                ChatPage* page = new ChatPage(this);
+                page->SetUserInfo(user_info);
+                ui->stackedWidget->addWidget(page);
+                _chat_pages[user_info->_uid] = page;
+                connect(page, &ChatPage::sig_append_send_chat_msg, this, &ChatDialog::slot_append_send_chat_msg);
+            }
         }
 
         //更新已加载条目
@@ -807,11 +817,6 @@ void ChatDialog::slot_add_auth_friend(std::shared_ptr<AuthInfo> auth_info) {
 
     UserMgr::GetInstance()->AddFriend(auth_info);
 
-    int randomValue = QRandomGenerator::global()->bounded(100); // 生成0到99之间的随机整数
-    int str_i = randomValue % strs.size();
-    int head_i = randomValue % heads.size();
-    int name_i = randomValue % names.size();
-
     auto* chat_user_wid = new ChatUserWid();
     auto user_info = std::make_shared<UserInfo>(auth_info);
     chat_user_wid->SetInfo(user_info);
@@ -821,6 +826,16 @@ void ChatDialog::slot_add_auth_friend(std::shared_ptr<AuthInfo> auth_info) {
     ui->chat_user_list->insertItem(0, item);
     ui->chat_user_list->setItemWidget(item, chat_user_wid);
     _chat_items_added.insert(auth_info->_uid, item);
+
+    if(!_chat_pages.count(user_info->_uid))
+    {
+        // 每一个user都有独立的chatpage
+        ChatPage* page = new ChatPage(this);
+        page->SetUserInfo(user_info);
+        ui->stackedWidget->addWidget(page);
+        _chat_pages[user_info->_uid] = page;
+        connect(page, &ChatPage::sig_append_send_chat_msg, this, &ChatDialog::slot_append_send_chat_msg);
+    }
 }
 
 void ChatDialog::slot_auth_rsp(std::shared_ptr<AuthRsp> auth_rsp)
@@ -835,10 +850,6 @@ void ChatDialog::slot_auth_rsp(std::shared_ptr<AuthRsp> auth_rsp)
     }
 
     UserMgr::GetInstance()->AddFriend(auth_rsp);
-    int randomValue = QRandomGenerator::global()->bounded(100); // 生成0到99之间的随机整数
-    int str_i = randomValue % strs.size();
-    int head_i = randomValue % heads.size();
-    int name_i = randomValue % names.size();
 
     auto* chat_user_wid = new ChatUserWid();
     auto user_info = std::make_shared<UserInfo>(auth_rsp);
@@ -849,6 +860,16 @@ void ChatDialog::slot_auth_rsp(std::shared_ptr<AuthRsp> auth_rsp)
     ui->chat_user_list->insertItem(0, item);
     ui->chat_user_list->setItemWidget(item, chat_user_wid);
     _chat_items_added.insert(auth_rsp->_uid, item);
+
+    if(!_chat_pages.count(user_info->_uid))
+    {
+        // 每一个user都有独立的chatpage
+        ChatPage* page = new ChatPage(this);
+        page->SetUserInfo(user_info);
+        ui->stackedWidget->addWidget(page);
+        _chat_pages[user_info->_uid] = page;
+        connect(page, &ChatPage::sig_append_send_chat_msg, this, &ChatDialog::slot_append_send_chat_msg);
+    }
 }
 
 void ChatDialog::slot_jump_chat_item(std::shared_ptr<SearchInfo> si)
@@ -878,6 +899,16 @@ void ChatDialog::slot_jump_chat_item(std::shared_ptr<SearchInfo> si)
     ui->chat_user_list->setItemWidget(item, chat_user_wid);
 
     _chat_items_added.insert(si->_uid, item);
+
+    if(!_chat_pages.count(user_info->_uid))
+    {
+        // 每一个user都有独立的chatpage
+        ChatPage* page = new ChatPage(this);
+        page->SetUserInfo(user_info);
+        ui->stackedWidget->addWidget(page);
+        _chat_pages[user_info->_uid] = page;
+        connect(page, &ChatPage::sig_append_send_chat_msg, this, &ChatDialog::slot_append_send_chat_msg);
+    }
 
     ui->side_chat_lb->SetSelected(true);
     SetSelectChatItem(si->_uid);
@@ -913,6 +944,16 @@ void ChatDialog::slot_jump_chat_item_from_infopage(std::shared_ptr<UserInfo> use
     ui->chat_user_list->setItemWidget(item, chat_user_wid);
 
     _chat_items_added.insert(user_info->_uid, item);
+
+    if(!_chat_pages.count(user_info->_uid))
+    {
+        // 每一个user都有独立的chatpage
+        ChatPage* page = new ChatPage(this);
+        page->SetUserInfo(user_info);
+        ui->stackedWidget->addWidget(page);
+        _chat_pages[user_info->_uid] = page;
+        connect(page, &ChatPage::sig_append_send_chat_msg, this, &ChatDialog::slot_append_send_chat_msg);
+    }
 
     ui->side_chat_lb->SetSelected(true);
     SetSelectChatItem(user_info->_uid);
